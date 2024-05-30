@@ -1,0 +1,338 @@
+x-services:
+  base-scripts: &base-scripts
+    image: boltz-scripts:latest
+    build: ./images/scripts
+    volumes:
+      - bitcoin-data:/root/.bitcoin
+      - elements-data:/root/.elements
+      - cln1-data:/root/.lightning-1
+      - cln2-data:/root/.lightning-2
+      - lnd1-data:/root/.lnd-1
+      - lnd2-data:/root/.lnd-2
+      - boltz-client-data:/root/.boltz
+      - ./data/host:/root/.host-data
+      - type: bind
+        source: ./data/elements/elements.conf
+        target: /root/.elements/elements.conf
+
+  base-lnd: &base-lnd
+    image: boltz/lnd:0.17.0-beta
+    restart: always
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+    command:
+      - --listen=0.0.0.0:9735
+      - --rpclisten=0.0.0.0:10009
+      - --restlisten=0.0.0.0:8081
+      - --bitcoin.active
+      - --bitcoin.regtest
+      - --bitcoin.node=bitcoind
+      - --bitcoind.rpchost=bitcoind
+      - --bitcoind.zmqpubrawtx=bitcoind:29000
+      - --bitcoind.zmqpubrawblock=bitcoind:29001
+      - --bitcoind.rpccookie=/root/.bitcoin/regtest/.cookie
+      - --noseedbackup
+      - --protocol.wumbo-channels
+    expose:
+      - 8081
+      - 9735
+    volumes_from:
+      - bitcoind:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "lncli --network=regtest --rpcserver=$$HOSTNAME --network=regtest getinfo" ]
+      interval: 1s
+      timeout: 1s
+      retries: 10
+      start_period: 0s
+
+  base-cln: &base-cln
+    image: boltz/c-lightning:23.08.1
+    restart: always
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+    command:
+      - --large-channels
+      - --network
+      - regtest
+      - --bind-addr=0.0.0.0:9735
+      - --bitcoin-rpcconnect=bitcoind
+      - --bitcoin-rpcport=18443
+      - --grpc-port=9736
+      - --dev-bitcoind-poll=3
+    expose:
+      - 9735
+      - 9736
+    volumes_from:
+      - bitcoind:ro
+    healthcheck:
+      test: [ "CMD", "lightning-cli", "--network=regtest", "getinfo" ]
+      timeout: 1s
+      retries: 10
+      interval: 1s
+      start_period: 0s
+
+services:
+  boltz:
+    hostname: boltz
+    container_name: boltz-boltz
+    depends_on:
+      regtest-start:
+        condition: service_completed_successfully
+    restart: always
+    image: boltz/boltz:latest
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - boltz-data:/root/.boltz
+      - lnd2-data:/data/lnd
+      - type: bind
+        source: ./data/elements/elements.cookie
+        target: /root/.elements/elements.cookie
+      - type: bind
+        source: ./data/boltz/boltz.conf
+        target: /root/.boltz/boltz.conf
+      - type: bind
+        source: ./data/boltz/seed.dat
+        target: /root/.boltz/seed.dat
+    volumes_from:
+      - bitcoind:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/9000'" ]
+      timeout: 1s
+      retries: 10
+      interval: 1s
+      start_period: 0s
+
+  boltz-client:
+    hostname: boltz-client
+    container_name: boltz-client
+    depends_on:
+      boltz:
+        condition: service_healthy
+    restart: always
+    image: boltz/boltz-client:latest
+    ports:
+      - 9002:9002
+      - 9003:9003
+    # TODO: healthcheck
+    volumes:
+      - cln2-data:/root/.lightning
+      - elements-data:/root/.elements
+      - boltz-client-data:/root/.boltz
+      - type: bind
+        source: ./data/boltz-client/boltz.toml
+        target: /root/.boltz/boltz.toml
+
+  anvil:
+    hostname: anvil
+    container_name: boltz-anvil
+    image: boltz/foundry:latest
+    build: ./images/foundry
+    ports:
+      - 8545:8545
+    healthcheck:
+      test: [ "CMD-SHELL", "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/8545'" ]
+      timeout: 1s
+      retries: 3
+      interval: 1s
+      start_period: 0s
+
+  bitcoind:
+    container_name: boltz-bitcoind
+    hostname: bitcoind
+    restart: always
+    image: boltz/bitcoin-core:24.0.1
+    command:
+      - -regtest
+      - -fallbackfee=0.00000253
+      - -zmqpubrawtx=tcp://0.0.0.0:29000
+      - -zmqpubrawblock=tcp://0.0.0.0:29001
+      - -txindex
+      - -rpcallowip=0.0.0.0/0
+      - -rpcbind=0.0.0.0
+    expose:
+      - 18444
+    ports:
+      - 18443:18443
+      - 29000:29000
+      - 29001:29001
+    volumes:
+      - bitcoin-data:/root/.bitcoin
+    healthcheck:
+      test: [ "CMD", "bitcoin-cli", "--rpccookiefile=/root/.bitcoin/regtest/.cookie", "-regtest", "getblockchaininfo" ]
+      timeout: 1s
+      retries: 1
+      interval: 1s
+      start_period: 0s
+
+  elementsd:
+    container_name: boltz-elementsd
+    hostname: elements
+    restart: always
+    image: ghcr.io/vulpemventures/elements:22.1.1
+    expose:
+      - 31001
+    ports:
+      - 31000:31000
+      - 31002:31002
+      - 18884:18884
+    volumes:
+      - elements-data:/home/elements/.elements
+      - type: bind
+        source: ./data/elements/elements.conf
+        target: /home/elements/.elements/elements.conf
+    healthcheck:
+      test: [ "CMD", "elements-cli", "-getinfo" ]
+      timeout: 1s
+      retries: 1
+      interval: 1s
+      start_period: 0s
+
+  clightning-1:
+    container_name: boltz-clightning-1
+    hostname: clightning-1
+    <<: *base-cln
+    ports:
+      - 9736:9736
+    volumes:
+      - cln1-data:/root/.lightning
+
+  clightning-2:
+    container_name: boltz-clightning-2
+    hostname: clightning-2
+    <<: *base-cln
+    ports:
+      - 9737:9736
+    volumes:
+      - cln2-data:/root/.lightning
+
+  lnd-1:
+    <<: *base-lnd
+    container_name: boltz-lnd-1
+    hostname: lnd-1
+    ports:
+      - 8081:8081
+      - 10009:10009
+    volumes:
+      - lnd1-data:/root/.lnd/
+
+  lnd-2:
+    <<: *base-lnd
+    container_name: boltz-lnd-2
+    hostname: lnd-2
+    ports:
+      - 11009:10009
+    volumes:
+      - lnd2-data:/root/.lnd/
+
+  regtest-start:
+    <<: *base-scripts
+    image: boltz/scripts:latest
+    restart: no
+    container_name: boltz-regtest-start
+    entrypoint: [ "/bin/bash", "-c", "source /etc/profile.d/utils.sh && regtest-start" ]
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+      elementsd:
+        condition: service_healthy
+      lnd-1:
+        condition: service_healthy
+      lnd-2:
+        condition: service_healthy
+      clightning-1:
+        condition: service_healthy
+      clightning-2:
+        condition: service_healthy
+      anvil:
+        condition: service_healthy
+
+  scripts:
+    <<: *base-scripts
+    image: boltz/scripts:latest
+    restart: no
+    container_name: boltz-scripts
+    depends_on:
+      # TODO: change to boltz-client: service_healthy once it has a healthcheck
+      - boltz-client
+
+  electrs:
+    hostname: electrs-bitcoin
+    container_name: boltz-electrs-bitcoin
+    restart: always
+    image: boltz/electrs:latest
+    build: ./images/electrs
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+    entrypoint: [ "electrs-bitcoin" ]
+    command:
+      - --electrum-rpc-addr
+      - electrs:19001
+      - --http-addr
+      - electrs:3002
+      - --daemon-rpc-addr
+      - bitcoind:18443
+      - --network
+      - regtest
+      - --jsonrpc-import
+      - -vvvv
+    ports:
+      - 19001:19001
+      - 3002:3002
+    volumes:
+      - bitcoin-data:/root/.bitcoin
+
+  electrs-liquid:
+    hostname: electrs-liquid
+    container_name: boltz-electrs-liquid
+    restart: always
+    image: boltz/electrs:latest
+    build: ./images/electrs
+    depends_on:
+      elementsd:
+        condition: service_healthy
+    entrypoint: [ "electrs-liquid" ]
+    command:
+      - --electrum-rpc-addr
+      - electrs-liquid:19002
+      - --http-addr
+      - electrs-liquid:3003
+      - --daemon-rpc-addr
+      - elementsd:18884
+      - --daemon-dir
+      - /root/.elements
+      - --cookie
+      - regtest:regtest
+      - --network
+      - liquidregtest
+      - --parent-network
+      - regtest
+      - --jsonrpc-import
+      - -vvvv
+    ports:
+      - 19002:19002
+      - 3003:3003
+    volumes:
+      - elements-data:/root/.elements
+
+volumes:
+  boltz-data:
+    name: boltz-backend-data
+  boltz-client-data:
+    name: boltz-client-data
+  bitcoin-data:
+    name: boltz-bitcoind-data
+  elements-data:
+    name: boltz-elements-data
+  cln1-data:
+    name: boltz-cln1-data
+  cln2-data:
+    name: boltz-cln2-data
+  lnd1-data:
+    name: boltz-lnd1-data
+  lnd2-data:
+    name: boltz-lnd2-data
