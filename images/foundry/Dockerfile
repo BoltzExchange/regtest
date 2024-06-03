@@ -1,3 +1,4 @@
+# Necessary for arm images that are not officially published
 FROM ubuntu:24.04 as builder
 
 ENV DEBIAN_FRONTEND=noninteractive
