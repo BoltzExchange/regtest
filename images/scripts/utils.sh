@@ -50,13 +50,6 @@ regtest-start(){
   deploy_contracts
 }
 
-bitcoin-init(){
-  echo "init_bitcoin_wallet..."
-  bitcoin-cli-sim createwallet regtest || bitcoin-cli-sim loadwallet regtest
-  echo "mining 150 bitcoin blocks..."
-  bitcoin-cli-sim -generate 150 > /dev/null
-}
-
 elements-init(){
   elements-cli-sim createwallet regtest || elements-cli-sim loadwallet regtest true
   echo "mining 150 liquid blocks..."
@@ -71,7 +64,6 @@ boltz-client-init(){
 }
 
 regtest-init(){
-  bitcoin-init
   elements-init
   lightning-sync
   lightning-init
