@@ -77,14 +77,32 @@ x-services:
       start_period: 0s
 
 services:
+  postgres:
+    hostname: postgres
+    container_name: boltz-postgres
+    restart: always
+    image: postgres:14-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --dbname boltz --username boltz"]
+      interval: 5s
+      timeout: 30s
+      retries: 10
+      start_period: 5s
+    environment:
+      - POSTGRES_DB=boltz
+      - POSTGRES_USER=boltz
+      - POSTGRES_PASSWORD=boltz
+
   boltz:
     hostname: boltz
     container_name: boltz-boltz
     depends_on:
       regtest-start:
         condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
     restart: always
-    image: boltz/boltz:v3.7.2
+    image: boltz/boltz:latest
     ports:
       - 9000:9000
       - 9001:9001
@@ -274,7 +292,6 @@ services:
       - --network
       - regtest
       - --jsonrpc-import
-      - -vvvv
     ports:
       - 19001:19001
       - 3002:3002
@@ -307,7 +324,6 @@ services:
       - --parent-network
       - regtest
       - --jsonrpc-import
-      - -vvvv
     ports:
       - 19002:19002
       - 3003:3003
