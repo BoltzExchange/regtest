@@ -16,7 +16,7 @@ x-services:
         target: /root/.elements/elements.conf
 
   base-lnd: &base-lnd
-    image: boltz/lnd:0.17.0-beta
+    image: boltz/lnd:latest
     restart: always
     depends_on:
       bitcoind:
@@ -185,7 +185,7 @@ services:
     container_name: boltz-elementsd
     hostname: elements
     restart: always
-    image: ghcr.io/vulpemventures/elements:22.1.1
+    image: ghcr.io/vulpemventures/elements:23.2.1
     expose:
       - 31001
     ports:
