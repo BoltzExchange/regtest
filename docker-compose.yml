@@ -84,7 +84,7 @@ services:
       regtest-start:
         condition: service_completed_successfully
     restart: always
-    image: boltz/boltz:latest
+    image: boltz/boltz:v3.7.2
     ports:
       - 9000:9000
       - 9001:9001
