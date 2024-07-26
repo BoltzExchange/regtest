@@ -292,7 +292,6 @@ services:
       - --network
       - regtest
       - --jsonrpc-import
-      - -vvvv
     ports:
       - 19001:19001
       - 3002:3002
@@ -325,7 +324,6 @@ services:
       - --parent-network
       - regtest
       - --jsonrpc-import
-      - -vvvv
     ports:
       - 19002:19002
       - 3003:3003
