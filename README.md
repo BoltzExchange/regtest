@@ -7,6 +7,10 @@ Successor of [legend-regtest-enviroment](https://github.com/BoltzExchange/legend
 ./start.sh
 ```
 
+```
+./stop.sh
+```
+
 Auth credentials for the host are stored in `./data/host` folder.
 
 ### Scripts container
