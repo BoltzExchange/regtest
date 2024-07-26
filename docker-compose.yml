@@ -16,7 +16,7 @@ x-services:
         target: /root/.elements/elements.conf
 
   base-lnd: &base-lnd
-    image: boltz/lnd:0.17.0-beta
+    image: boltz/lnd:latest
     restart: always
     depends_on:
       bitcoind:
