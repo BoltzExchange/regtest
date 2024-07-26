@@ -64,6 +64,7 @@ x-services:
       - --developer
       - --dev-fast-gossip
       - --dev-fast-reconnect
+      - --experimental-offers
     expose:
       - 9735
       - 9736
