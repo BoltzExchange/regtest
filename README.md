@@ -1,6 +1,6 @@
-# boltz-docker
+# Boltz Regtest
 
-Based on [legend-regtest-enviroment](https://github.com/BoltzExchange/legend-regtest-enviroment)
+Successor of [legend-regtest-enviroment](https://github.com/BoltzExchange/legend-regtest-enviroment)
 
 ## Usage
 ```
