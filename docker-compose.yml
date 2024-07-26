@@ -185,7 +185,7 @@ services:
     container_name: boltz-elementsd
     hostname: elements
     restart: always
-    image: ghcr.io/vulpemventures/elements:22.1.1
+    image: ghcr.io/vulpemventures/elements:23.2.1
     expose:
       - 31001
     ports:
