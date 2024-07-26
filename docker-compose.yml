@@ -77,14 +77,32 @@ x-services:
       start_period: 0s
 
 services:
+  postgres:
+    hostname: postgres
+    container_name: boltz-postgres
+    restart: always
+    image: postgres:14-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --dbname boltz --username boltz"]
+      interval: 30s
+      timeout: 60s
+      retries: 1
+      start_period: 30s
+    environment:
+      - POSTGRES_DB=boltz
+      - POSTGRES_USER=boltz
+      - POSTGRES_PASSWORD=boltz
+
   boltz:
     hostname: boltz
     container_name: boltz-boltz
     depends_on:
       regtest-start:
         condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
     restart: always
-    image: boltz/boltz:v3.7.2
+    image: boltz/boltz:latest
     ports:
       - 9000:9000
       - 9001:9001
