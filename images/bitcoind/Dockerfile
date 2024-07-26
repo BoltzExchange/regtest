@@ -1,5 +1,5 @@
 # Base image
-FROM boltz/bitcoin-core:24.0.1
+FROM boltz/bitcoin-core:latest
 
 COPY entrypoint.sh /entrypoint.sh
 
