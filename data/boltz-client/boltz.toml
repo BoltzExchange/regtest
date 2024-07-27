@@ -14,7 +14,7 @@ url = "http://boltz:9001"
 # path = "/home/michael/test.db"
 
 [CLN]
-host = "clightning-2"
+host = "cln-2"
 port = 9736
 
 rootcert = "/root/.lightning/regtest/ca.pem"

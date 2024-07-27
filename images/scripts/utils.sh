@@ -26,9 +26,9 @@ lncli-sim() {
 }
 
 # args(i)
-fund_clightning_node() {
+fund_cln_node() {
   address=$(lightning-cli-sim $1 newaddr | jq -r .bech32)
-  echo "funding: $address on clightning-node: $1"
+  echo "funding: $address on cln-node: $1"
   bitcoin-cli-sim -named sendtoaddress address=$address amount=30 fee_rate=100 > /dev/null
 }
 
@@ -40,9 +40,9 @@ fund_lnd_node() {
 }
 
 # args(i, j)
-connect_clightning_node() {
+connect_cln_node() {
   pubkey=$(lightning-cli-sim $2 getinfo | jq -r '.id')
-  lightning-cli-sim $1 connect $pubkey@clightning-$2:9735 | jq -r '.id'
+  lightning-cli-sim $1 connect $pubkey@cln-$2:9735 | jq -r '.id'
 }
 
 regtest-start(){
@@ -70,8 +70,8 @@ regtest-init(){
 }
 
 lightning-sync(){
-  wait-for-clightning-sync 1
-  wait-for-clightning-sync 2
+  wait-for-cln-sync 1
+  wait-for-cln-sync 2
   wait-for-lnd-sync 1
   wait-for-lnd-sync 2
 }
@@ -79,8 +79,8 @@ lightning-sync(){
 lightning-init(){
   # create 10 UTXOs for each node
   for i in 0 1 2 3 4; do
-    fund_clightning_node 1
-    fund_clightning_node 2
+    fund_cln_node 1
+    fund_cln_node 2
     fund_lnd_node 1
     fund_lnd_node 2
   done
@@ -103,35 +103,35 @@ lightning-init(){
   wait-for-lnd-channel 1
 
   # lnd-1 -> cln-1
-  lncli-sim 1 connect $(lightning-cli-sim 1 getinfo | jq -r '.id')@clightning-1 > /dev/null
+  lncli-sim 1 connect $(lightning-cli-sim 1 getinfo | jq -r '.id')@cln-1 > /dev/null
   echo "open channel from lnd-1 to cln-1"
   lncli-sim 1 openchannel $(lightning-cli-sim 1 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
   bitcoin-cli-sim -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 1
 
   # lnd-2 -> cln-1
-  lncli-sim 2 connect $(lightning-cli-sim 1 getinfo | jq -r '.id')@clightning-1 > /dev/null
+  lncli-sim 2 connect $(lightning-cli-sim 1 getinfo | jq -r '.id')@cln-1 > /dev/null
   echo "open channel from lnd-2 to cln-1"
   lncli-sim 2 openchannel $(lightning-cli-sim 1 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
   bitcoin-cli-sim -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 2
-  wait-for-clightning-channel 1
+  wait-for-cln-channel 1
 
   # lnd-1 -> cln-2
-  lncli-sim 1 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@clightning-2 > /dev/null
+  lncli-sim 1 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2 > /dev/null
   echo "open channel from lnd-1 to cln-2"
   lncli-sim 1 openchannel $(lightning-cli-sim 2 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
   bitcoin-cli-sim -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 1
-  wait-for-clightning-channel 2
+  wait-for-cln-channel 2
 
   # lnd-2 -> cln-2
-  lncli-sim 2 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@clightning-2 > /dev/null
+  lncli-sim 2 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2 > /dev/null
   echo "open channel from lnd-2 to cln-2"
   lncli-sim 2 openchannel $(lightning-cli-sim 2 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
   bitcoin-cli-sim -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 2
-  wait-for-clightning-channel 2
+  wait-for-cln-channel 2
 
   lightning-sync
 
@@ -159,7 +159,7 @@ wait-for-lnd-sync(){
   done
 }
 
-wait-for-clightning-channel(){
+wait-for-cln-channel(){
   while true; do
     pending=$(lightning-cli-sim $1 getinfo | jq -r '.num_pending_channels | length')
     echo "cln-$1 pendingchannels: $pending"
@@ -174,7 +174,7 @@ wait-for-clightning-channel(){
   done
 }
 
-wait-for-clightning-sync(){
+wait-for-cln-sync(){
   while true; do
     if [[ "$(lightning-cli-sim $1 getinfo 2>&1 | jq -r '.warning_bitcoind_sync' 2> /dev/null)" == "null" ]]; then
       if [[ "$(lightning-cli-sim $1 getinfo 2>&1 | jq -r '.warning_lightningd_sync' 2> /dev/null)" == "null" ]]; then

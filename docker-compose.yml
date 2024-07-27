@@ -204,18 +204,18 @@ services:
       interval: 1s
       start_period: 0s
 
-  clightning-1:
-    container_name: boltz-clightning-1
-    hostname: clightning-1
+  cln-1:
+    container_name: boltz-cln1
+    hostname: cln-1
     <<: *base-cln
     ports:
       - 9736:9736
     volumes:
       - cln1-data:/root/.lightning
 
-  clightning-2:
-    container_name: boltz-clightning-2
-    hostname: clightning-2
+  cln-2:
+    container_name: boltz-cln-2
+    hostname: cln-2
     <<: *base-cln
     ports:
       - 9737:9736
@@ -256,9 +256,9 @@ services:
         condition: service_healthy
       lnd-2:
         condition: service_healthy
-      clightning-1:
+      cln-1:
         condition: service_healthy
-      clightning-2:
+      cln-2:
         condition: service_healthy
       anvil:
         condition: service_healthy
