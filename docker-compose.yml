@@ -96,7 +96,7 @@ services:
       - POSTGRES_USER=boltz
       - POSTGRES_PASSWORD=boltz
 
-  boltz:
+  boltz-backend:
     hostname: boltz
     container_name: boltz-backend
     depends_on:
@@ -126,7 +126,7 @@ services:
     hostname: boltz-client
     container_name: boltz-client
     depends_on:
-      boltz:
+      boltz-backend:
         condition: service_healthy
     restart: always
     image: boltz/boltz-client:latest
