@@ -9,11 +9,8 @@ x-services:
       - cln2-data:/root/.lightning-2
       - lnd1-data:/root/.lnd-1
       - lnd2-data:/root/.lnd-2
-      - boltz-client-data:/root/.boltz
-      - ./data/host:/root/.host-data
-      - type: bind
-        source: ./data/elements/elements.conf
-        target: /root/.elements/elements.conf
+      - boltz-client-data:/root/.boltz-client
+      - boltz-data:/root/.boltz-backend
 
   base-lnd: &base-lnd
     image: boltz/lnd:latest
@@ -77,6 +74,12 @@ x-services:
       start_period: 0s
 
 services:
+  cleanup:
+    <<: *base-scripts
+    restart: no
+    container_name: boltz-cleanup
+    entrypoint: [ "/bin/bash", "-c", "/cleanup.sh" ]
+
   postgres:
     hostname: postgres
     container_name: boltz-postgres
@@ -95,7 +98,7 @@ services:
 
   boltz:
     hostname: boltz
-    container_name: boltz-boltz
+    container_name: boltz-backend
     depends_on:
       regtest-start:
         condition: service_completed_successfully
@@ -109,15 +112,7 @@ services:
     volumes:
       - boltz-data:/root/.boltz
       - lnd2-data:/data/lnd
-      - type: bind
-        source: ./data/elements/elements.cookie
-        target: /root/.elements/elements.cookie
-      - type: bind
-        source: ./data/boltz/boltz.conf
-        target: /root/.boltz/boltz.conf
-      - type: bind
-        source: ./data/boltz/seed.dat
-        target: /root/.boltz/seed.dat
+      - elements-data:/root/.elements
     volumes_from:
       - bitcoind:ro
     healthcheck:
@@ -138,14 +133,16 @@ services:
     ports:
       - 9002:9002
       - 9003:9003
-    # TODO: healthcheck
+    healthcheck:
+      test: [ "CMD", "boltzcli", "--no-macaroons", "--host", "boltz-client", "getinfo" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 0s
     volumes:
       - cln2-data:/root/.lightning
       - elements-data:/root/.elements
       - boltz-client-data:/root/.boltz
-      - type: bind
-        source: ./data/boltz-client/boltz.toml
-        target: /root/.boltz/boltz.toml
 
   anvil:
     hostname: anvil
@@ -166,6 +163,9 @@ services:
     hostname: bitcoind
     restart: always
     build: ./images/bitcoind
+    depends_on:
+      cleanup:
+        condition: service_completed_successfully
     expose:
       - 18444
     ports:
@@ -186,6 +186,9 @@ services:
     hostname: elements
     restart: always
     image: ghcr.io/vulpemventures/elements:latest
+    depends_on:
+      cleanup:
+        condition: service_completed_successfully
     expose:
       - 31001
     ports:
@@ -194,9 +197,6 @@ services:
       - 18884:18884
     volumes:
       - elements-data:/home/elements/.elements
-      - type: bind
-        source: ./data/elements/elements.conf
-        target: /home/elements/.elements/elements.conf
     healthcheck:
       test: [ "CMD", "elements-cli", "-getinfo" ]
       timeout: 1s
@@ -269,8 +269,8 @@ services:
     restart: no
     container_name: boltz-scripts
     depends_on:
-      # TODO: change to boltz-client: service_healthy once it has a healthcheck
-      - boltz-client
+      boltz-client:
+        condition: service_healthy
 
   electrs:
     hostname: electrs-bitcoin
@@ -333,17 +333,57 @@ services:
 volumes:
   boltz-data:
     name: boltz-backend-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/backend
   boltz-client-data:
     name: boltz-client-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/boltz-client
   bitcoin-data:
     name: boltz-bitcoind-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/bitcoind
   elements-data:
     name: boltz-elements-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/elements
   cln1-data:
     name: boltz-cln1-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/cln1
   cln2-data:
     name: boltz-cln2-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/cln2
   lnd1-data:
     name: boltz-lnd1-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/lnd1
   lnd2-data:
     name: boltz-lnd2-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/lnd2

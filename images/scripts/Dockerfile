@@ -24,6 +24,9 @@ RUN chmod +x /etc/profile.d/utils.sh
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+COPY cleanup.sh /cleanup.sh
+RUN chmod +x /cleanup.sh
+
 RUN echo "if [ -f /etc/profile.d/utils.sh ]; then source /etc/profile.d/utils.sh; fi" >> /etc/bash.bashrc
 
 ENTRYPOINT ["/entrypoint.sh"]
