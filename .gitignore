@@ -18,4 +18,3 @@ data/bitcoind/*
 !data/bitcoind/.gitkeep
 data/boltz-client/*
 !data/boltz-client/boltz.toml
-/venv
