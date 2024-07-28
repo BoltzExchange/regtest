@@ -1,6 +1,6 @@
 x-services:
   base-scripts: &base-scripts
-    image: boltz/scripts:latest
+    image: ${SCRIPTS_IMAGE}
     volumes:
       - bitcoin-data:/root/.bitcoin
       - elements-data:/root/.elements
@@ -12,7 +12,7 @@ x-services:
       - boltz-data:/root/.boltz-backend
 
   base-lnd: &base-lnd
-    image: boltz/lnd:latest
+    image: ${LND_IMAGE}
     restart: always
     depends_on:
       bitcoind-init:
@@ -43,7 +43,7 @@ x-services:
       start_period: 0s
 
   base-cln: &base-cln
-    image: boltz/c-lightning:latest
+    image: ${CLN_IMAGE}
     restart: always
     depends_on:
       bitcoind-init:
@@ -83,7 +83,7 @@ services:
     hostname: postgres
     container_name: boltz-postgres
     restart: always
-    image: postgres:14-alpine
+    image: ${POSTGRES_IMAGE}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready --dbname boltz --username boltz"]
       interval: 5s
@@ -104,7 +104,7 @@ services:
       postgres:
         condition: service_healthy
     restart: always
-    image: boltz/boltz:latest
+    image: ${BOLTZ_BACKEND_IMAGE}
     ports:
       - 9000:9000
       - 9001:9001
@@ -128,7 +128,7 @@ services:
       boltz-backend:
         condition: service_healthy
     restart: always
-    image: boltz/boltz-client:latest
+    image: ${BOLTZ_CLIENT_IMAGE}
     ports:
       - 9002:9002
       - 9003:9003
@@ -146,7 +146,7 @@ services:
   anvil:
     hostname: anvil
     container_name: boltz-anvil
-    image: boltz/foundry:latest
+    image: ${FOUNDRY_IMAGE}
     ports:
       - 8545:8545
     healthcheck:
@@ -160,7 +160,7 @@ services:
     container_name: boltz-bitcoind
     hostname: bitcoind
     restart: always
-    image: boltz/bitcoin-core:latest
+    image: ${BITCOIN_CORE_IMAGE}
     command:
       - -regtest
       - -fallbackfee=0.00000253
@@ -191,7 +191,7 @@ services:
     container_name: boltz-elementsd
     hostname: elements
     restart: always
-    image: ghcr.io/vulpemventures/elements:latest
+    image: ${ELEMENTS_IMAGE}
     depends_on:
       cleanup:
         condition: service_completed_successfully
@@ -249,7 +249,6 @@ services:
 
   bitcoind-init:
     <<: *base-scripts
-    image: boltz/scripts:latest
     restart: no
     container_name: boltz-bitcoind-init
     entrypoint: [ "/bin/bash", "-c", "source /etc/profile.d/utils.sh && bitcoind-init" ]
@@ -258,7 +257,6 @@ services:
 
   regtest-start:
     <<: *base-scripts
-    image: boltz/scripts:latest
     restart: no
     container_name: boltz-regtest-start
     entrypoint: [ "/bin/bash", "-c", "source /etc/profile.d/utils.sh && regtest-start" ]
@@ -280,7 +278,6 @@ services:
 
   scripts:
     <<: *base-scripts
-    image: boltz/scripts:latest
     restart: no
     container_name: boltz-scripts
     depends_on:
@@ -291,7 +288,7 @@ services:
     hostname: electrs-bitcoin
     container_name: boltz-electrs-bitcoin
     restart: always
-    image: boltz/electrs:latest
+    image: ${ELECTRS_IMAGE}
     depends_on:
       bitcoind-init:
         condition: service_completed_successfully
@@ -322,7 +319,7 @@ services:
     hostname: electrs-liquid
     container_name: boltz-electrs-liquid
     restart: always
-    image: boltz/electrs:latest
+    image: ${ELECTRS_IMAGE}
     depends_on:
       elementsd:
         condition: service_healthy
@@ -359,7 +356,7 @@ services:
     hostname: esplora
     container_name: boltz-esplora
     restart: always
-    image: boltz/esplora:latest
+    image: ${ESPLORA_IMAGE}
     depends_on:
       electrs:
         condition: service_healthy
