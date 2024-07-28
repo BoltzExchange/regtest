@@ -1,5 +1,8 @@
 # Necessary for arm images that are not officially published
-FROM ubuntu:24.04 AS builder
+
+ARG UBUNTU_VERSION=24.04
+
+FROM ubuntu:${UBUNTU_VERSION} AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -7,7 +10,7 @@ RUN apt update && apt install -y curl git && \
     curl -L https://foundry.paradigm.xyz | bash && \
     ~/.foundry/bin/foundryup
 
-FROM ubuntu:24.04
+FROM ubuntu:${UBUNTU_VERSION}
 
 ENV PATH="/root/.foundry/bin:$PATH"
 

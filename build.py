@@ -30,20 +30,37 @@ UBUNTU_VERSION = BuildArgument(
     value="24.04",
 )
 
+NODE_VERSION = BuildArgument(
+    name="NODE_VERSION",
+    value="lts-bookworm",
+)
+
+NGINX_VERSION = BuildArgument(
+    name="NGINX_VERSION",
+    value="alpine",
+)
+
 IMAGES: dict[str, Image] = {
-    "scripts": Image(
-        tag="latest",
-        arguments=[
-            UBUNTU_VERSION,
-        ],
-    ),
     "electrs": Image(
         tag="latest",
         arguments=[
             UBUNTU_VERSION,
         ],
     ),
+    "esplora": Image(
+        tag="latest",
+        arguments=[
+            NODE_VERSION,
+            NGINX_VERSION,
+        ],
+    ),
     "foundry": Image(
+        tag="latest",
+        arguments=[
+            UBUNTU_VERSION,
+        ],
+    ),
+    "scripts": Image(
         tag="latest",
         arguments=[
             UBUNTU_VERSION,
@@ -94,7 +111,7 @@ def list_images(to_list: list[str]) -> None:
         if build_details.arguments:
             print("    Build arguments:")
         for argument in build_details.arguments:
-            print(f"      - {argument.name}:{argument.value}")
+            print(f"      - {argument.name}={argument.value}")
 
         print()
 
