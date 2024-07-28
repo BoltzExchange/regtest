@@ -24,3 +24,5 @@ docker exec -it boltz-scripts bash
 - boltzcli-sim
 - lightning-cli-sim
 - lncli-sim
+
+Or alternatively, you can `source aliases.sh` to have these convenience scripts available on the host machine.

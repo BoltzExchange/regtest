@@ -1,12 +1,12 @@
-FROM boltz/bitcoin-core:24.0.1 AS bitcoin-core
-FROM ghcr.io/vulpemventures/elements:22.1.1 as elements-core
+FROM boltz/bitcoin-core:latest AS bitcoin-core
+FROM ghcr.io/vulpemventures/elements:latest AS elements-core
 
-FROM boltz/lnd:0.17.0-beta as lnd
-FROM boltz/c-lightning:23.08.1 as cln
+FROM boltz/lnd:latest AS lnd
+FROM boltz/c-lightning:latest AS cln
 
-FROM boltz/foundry:latest as anvil
+FROM boltz/foundry:latest AS anvil
 
-FROM boltz/boltz-client:latest as boltz-client
+FROM boltz/boltz-client:latest AS boltz-client
 
 FROM ubuntu:24.04
 
