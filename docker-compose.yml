@@ -1,7 +1,6 @@
 x-services:
   base-scripts: &base-scripts
-    image: boltz-scripts:latest
-    build: ./images/scripts
+    image: boltz/scripts:latest
     volumes:
       - bitcoin-data:/root/.bitcoin
       - elements-data:/root/.elements
@@ -148,7 +147,6 @@ services:
     hostname: anvil
     container_name: boltz-anvil
     image: boltz/foundry:latest
-    build: ./images/foundry
     ports:
       - 8545:8545
     healthcheck:
@@ -294,7 +292,6 @@ services:
     container_name: boltz-electrs-bitcoin
     restart: always
     image: boltz/electrs:latest
-    build: ./images/electrs
     depends_on:
       bitcoind-init:
         condition: service_completed_successfully
@@ -320,7 +317,6 @@ services:
     container_name: boltz-electrs-liquid
     restart: always
     image: boltz/electrs:latest
-    build: ./images/electrs
     depends_on:
       elementsd:
         condition: service_healthy
