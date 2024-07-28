@@ -45,6 +45,29 @@ connect_cln_node() {
   lightning-cli-sim $1 connect $pubkey@cln-$2:9735 | jq -r '.id'
 }
 
+bitcoind-init() {
+  # Wait until bitcoind is ready
+  while true; do
+      sleep 1
+      if bitcoin-cli-sim getblockchaininfo &> /dev/null; then
+          echo "bitcoind is ready"
+          break
+      else
+          echo "Waiting for bitcoind to initialize..."
+      fi
+  done
+
+  bitcoin-cli-sim createwallet regtest || bitcoin-cli-sim loadwallet regtest
+  # Generate 150 blocks
+  bitcoin-cli-sim -generate 150
+
+  if [ $? -eq 0 ]; then
+      echo "Successfully generated blocks"
+  else
+      echo "Failed to generate blocks"
+  fi
+}
+
 regtest-start(){
   regtest-init
   deploy_contracts
