@@ -12,6 +12,8 @@ Successor of [legend-regtest-enviroment](https://github.com/BoltzExchange/legend
 ./stop.sh
 ```
 
+- Web App: [http://localhost:8080](http://localhost:8080)
+
 Data dirs for the services are stored in `./data` folder.
 
 ### Scripts container
