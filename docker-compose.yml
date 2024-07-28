@@ -306,6 +306,12 @@ services:
       - --network
       - regtest
       - --jsonrpc-import
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s $(hostname):3002/blocks/tip/height" ]
+      timeout: 1s
+      retries: 5
+      interval: 2s
+      start_period: 5s
     ports:
       - 19001:19001
       - 3002:3002
@@ -337,11 +343,31 @@ services:
       - --parent-network
       - regtest
       - --jsonrpc-import
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s $(hostname):3003/blocks/tip/height" ]
+      timeout: 1s
+      retries: 5
+      interval: 2s
+      start_period: 5s
     ports:
       - 19002:19002
       - 3003:3003
     volumes:
       - elements-data:/root/.elements
+
+  esplora:
+    hostname: esplora
+    container_name: boltz-esplora
+    restart: always
+    image: boltz/esplora:latest
+    build: ./images/esplora
+    depends_on:
+      electrs:
+        condition: service_healthy
+      electrs-liquid:
+        condition: service_healthy
+    ports:
+      - 4002:4002
 
 volumes:
   boltz-data:
