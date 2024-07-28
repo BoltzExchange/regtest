@@ -3,11 +3,12 @@
 Successor of [legend-regtest-enviroment](https://github.com/BoltzExchange/legend-regtest-enviroment)
 
 ## Usage
-```
+
+```bash
 ./start.sh
 ```
 
-```
+```bash
 ./stop.sh
 ```
 
@@ -15,7 +16,7 @@ Data dirs for the services are stored in `./data` folder.
 
 ### Scripts container
 
-```
+```bash
 docker exec -it boltz-scripts bash
 ```
 
