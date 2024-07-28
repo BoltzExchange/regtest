@@ -66,6 +66,12 @@ bitcoind-init() {
   else
       echo "Failed to generate blocks"
   fi
+
+  bitcoin-cli-sim createwallet client || bitcoin-cli-sim loadwallet client
+
+  CLIENT_ADDRESS=$(bitcoin-cli-sim -rpcwallet=client getnewaddress "" bech32m)
+  bitcoin-cli-sim -rpcwallet=regtest sendtoaddress $CLIENT_ADDRESS 10
+  bitcoin-cli-sim -rpcwallet=regtest -generate 1
 }
 
 regtest-start(){
@@ -78,6 +84,12 @@ elements-init(){
   echo "mining 150 liquid blocks..."
   elements-cli-sim -generate 150 > /dev/null
   elements-cli-sim rescanblockchain 0 > /dev/null
+
+  elements-cli-sim createwallet client || elements-cli-sim loadwallet client true
+
+  CLIENT_ADDRESS=$(elements-cli-sim -rpcwallet=client getnewaddress)
+  elements-cli-sim -rpcwallet=regtest sendtoaddress $CLIENT_ADDRESS 10
+  elements-cli-sim -rpcwallet=regtest -generate 1
 }
 
 # TODO: currently not being used
