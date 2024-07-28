@@ -22,8 +22,10 @@ Data dirs for the services are stored in `./data` folder.
 docker exec -it boltz-scripts bash
 ```
 
-- bitcoin-cli-sim
-- elements-cli-sim
+- bitcoin-cli-sim-client
+- bitcoin-cli-sim-server
+- elements-cli-sim-client
+- elements-cli-sim-server
 - boltzcli-sim
 - lightning-cli-sim
 - lncli-sim
