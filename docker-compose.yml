@@ -134,7 +134,7 @@ services:
       - 9002:9002
       - 9003:9003
     healthcheck:
-      test: [ "CMD", "boltzcli", "--no-macaroons", "--host", "boltz-client", "getinfo" ]
+      test: ["CMD", "boltzcli", "--host", "boltz-client", "getinfo"]
       interval: 5s
       timeout: 3s
       retries: 3

@@ -8,7 +8,7 @@ function elements-cli-sim() {
 }
 
 boltzcli-sim() {
-  boltzcli --no-macaroons --host boltz-client "$@"
+  boltzcli --datadir=/root/.boltz-client --host boltz-client "$@"
 }
 
 # args(i, cmd)
