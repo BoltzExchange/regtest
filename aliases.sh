@@ -1,7 +1,7 @@
 #!/bin/bash
 
 run_in_container() {
-    docker exec boltz-scripts bash -c "source /etc/profile.d/utils.sh && $(printf '%q ' "$@")"
+    docker exec -it boltz-scripts bash -c "source /etc/profile.d/utils.sh && $(printf '%q ' "$@")"
 }
 
 alias bitcoin-cli-sim='run_in_container bitcoin-cli-sim'
