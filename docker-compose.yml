@@ -360,7 +360,6 @@ services:
     container_name: boltz-esplora
     restart: always
     image: boltz/esplora:latest
-    build: ./images/esplora
     depends_on:
       electrs:
         condition: service_healthy
