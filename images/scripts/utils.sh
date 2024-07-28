@@ -48,14 +48,14 @@ lncli-sim() {
 fund_cln_node() {
   address=$(lightning-cli-sim $1 newaddr | jq -r .bech32)
   echo "funding: $address on cln-node: $1"
-  bitcoin-cli-sim-server -named sendtoaddress address=$address amount=30 fee_rate=100 > /dev/null
+  bitcoin-cli-sim-server -named sendtoaddress address=$address amount=30 fee_rate=1 > /dev/null
 }
 
 # args(i)
 fund_lnd_node() {
   address=$(lncli-sim $1 newaddress p2wkh | jq -r .address)
   echo "funding: $address on lnd-node: $1"
-  bitcoin-cli-sim-server -named sendtoaddress address=$address amount=30 fee_rate=100 > /dev/null
+  bitcoin-cli-sim-server -named sendtoaddress address=$address amount=30 fee_rate=1 > /dev/null
 }
 
 # args(i, j)
@@ -109,12 +109,6 @@ elements-init(){
   CLIENT_ADDRESS=$(elements-cli-sim -rpcwallet=client getnewaddress)
   elements-cli-sim-server -rpcwallet=regtest sendtoaddress $CLIENT_ADDRESS 10
   elements-cli-sim-server -rpcwallet=regtest -generate 1
-}
-
-# TODO: currently not being used
-boltz-client-init(){
-  boltzcli-sim wallet create lnbits LBTC
-  boltzcli-sim formatmacaroon
 }
 
 regtest-init(){
