@@ -121,6 +121,17 @@ services:
       interval: 1s
       start_period: 0s
 
+  boltz-web-app:
+    hostname: web-app
+    container_name: boltz-web-app
+    depends_on:
+      boltz-backend:
+        condition: service_healthy
+    restart: always
+    image: ${BOLTZ_WEBAPP_IMAGE}
+    ports:
+       - 8080:80
+
   boltz-client:
     hostname: boltz-client
     container_name: boltz-client
