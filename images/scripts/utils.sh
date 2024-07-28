@@ -1,10 +1,29 @@
 #!/bin/bash
+BITCOIN_CLI_PARAMS="-rpcconnect=bitcoind -regtest -rpccookiefile=/root/.bitcoin/regtest/.cookie"
+
 function bitcoin-cli-sim() {
-  bitcoin-cli -rpcconnect=bitcoind -regtest -rpccookiefile=/root/.bitcoin/regtest/.cookie "$@"
+  bitcoin-cli $BITCOIN_CLI_PARAMS "$@"
 }
 
+function bitcoin-cli-sim-server() {
+  bitcoin-cli $BITCOIN_CLI_PARAMS -rpcwallet="regtest" "$@"
+}
+
+function bitcoin-cli-sim-client() {
+  bitcoin-cli $BITCOIN_CLI_PARAMS -rpcwallet="client" "$@"
+}
+
+ELEMENTS_CLI_PARAMS="-rpcconnect=elementsd"
 function elements-cli-sim() {
-  elements-cli -rpcconnect=elementsd "$@"
+  elements-cli $ELEMENTS_CLI_PARAMS "$@"
+}
+
+function elements-cli-sim-server() {
+  elements-cli $ELEMENTS_CLI_PARAMS -rpcwallet="regtest" "$@"
+}
+
+function elements-cli-sim-client() {
+  elements-cli $ELEMENTS_CLI_PARAMS -rpcwallet="client" "$@"
 }
 
 boltzcli-sim() {
@@ -29,14 +48,14 @@ lncli-sim() {
 fund_cln_node() {
   address=$(lightning-cli-sim $1 newaddr | jq -r .bech32)
   echo "funding: $address on cln-node: $1"
-  bitcoin-cli-sim -named sendtoaddress address=$address amount=30 fee_rate=100 > /dev/null
+  bitcoin-cli-sim-server -named sendtoaddress address=$address amount=30 fee_rate=1 > /dev/null
 }
 
 # args(i)
 fund_lnd_node() {
   address=$(lncli-sim $1 newaddress p2wkh | jq -r .address)
   echo "funding: $address on lnd-node: $1"
-  bitcoin-cli-sim -named sendtoaddress address=$address amount=30 fee_rate=100 > /dev/null
+  bitcoin-cli-sim-server -named sendtoaddress address=$address amount=30 fee_rate=1 > /dev/null
 }
 
 # args(i, j)
@@ -49,7 +68,7 @@ bitcoind-init() {
   # Wait until bitcoind is ready
   while true; do
       sleep 1
-      if bitcoin-cli-sim getblockchaininfo &> /dev/null; then
+      if bitcoin-cli-sim-server getblockchaininfo &> /dev/null; then
           echo "bitcoind is ready"
           break
       else
@@ -59,7 +78,7 @@ bitcoind-init() {
 
   bitcoin-cli-sim createwallet regtest || bitcoin-cli-sim loadwallet regtest
   # Generate 150 blocks
-  bitcoin-cli-sim -generate 150
+  bitcoin-cli-sim-server -generate 150
 
   if [ $? -eq 0 ]; then
       echo "Successfully generated blocks"
@@ -69,9 +88,9 @@ bitcoind-init() {
 
   bitcoin-cli-sim createwallet client || bitcoin-cli-sim loadwallet client
 
-  CLIENT_ADDRESS=$(bitcoin-cli-sim -rpcwallet=client getnewaddress "" bech32m)
-  bitcoin-cli-sim -rpcwallet=regtest sendtoaddress $CLIENT_ADDRESS 10
-  bitcoin-cli-sim -rpcwallet=regtest -generate 1
+  CLIENT_ADDRESS=$(bitcoin-cli-sim-client getnewaddress "" bech32m)
+  bitcoin-cli-sim-server -rpcwallet=regtest sendtoaddress $CLIENT_ADDRESS 10
+  bitcoin-cli-sim-server -rpcwallet=regtest -generate 1
 }
 
 regtest-start(){
@@ -82,20 +101,14 @@ regtest-start(){
 elements-init(){
   elements-cli-sim createwallet regtest || elements-cli-sim loadwallet regtest true
   echo "mining 150 liquid blocks..."
-  elements-cli-sim -generate 150 > /dev/null
-  elements-cli-sim rescanblockchain 0 > /dev/null
+  elements-cli-sim-server -generate 150 > /dev/null
+  elements-cli-sim-server rescanblockchain 0 > /dev/null
 
   elements-cli-sim createwallet client || elements-cli-sim loadwallet client true
 
   CLIENT_ADDRESS=$(elements-cli-sim -rpcwallet=client getnewaddress)
-  elements-cli-sim -rpcwallet=regtest sendtoaddress $CLIENT_ADDRESS 10
-  elements-cli-sim -rpcwallet=regtest -generate 1
-}
-
-# TODO: currently not being used
-boltz-client-init(){
-  boltzcli-sim wallet create lnbits LBTC
-  boltzcli-sim formatmacaroon
+  elements-cli-sim-server -rpcwallet=regtest sendtoaddress $CLIENT_ADDRESS 10
+  elements-cli-sim-server -rpcwallet=regtest -generate 1
 }
 
 regtest-init(){
@@ -121,7 +134,7 @@ lightning-init(){
   done
 
   echo "mining 3 blocks..."
-  bitcoin-cli-sim -generate 3 > /dev/null
+  bitcoin-cli-sim-server -generate 3 > /dev/null
 
   lightning-sync
 
@@ -134,21 +147,21 @@ lightning-init(){
   lncli-sim 1 connect $(lncli-sim 2 getinfo | jq -r '.identity_pubkey')@lnd-2 > /dev/null
   echo "open channel from lnd-1 to lnd-2"
   lncli-sim 1 openchannel $(lncli-sim 2 getinfo | jq -r '.identity_pubkey') $channel_size $balance_size > /dev/null
-  bitcoin-cli-sim -generate $channel_confirms > /dev/null
+  bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 1
 
   # lnd-1 -> cln-1
   lncli-sim 1 connect $(lightning-cli-sim 1 getinfo | jq -r '.id')@cln-1 > /dev/null
   echo "open channel from lnd-1 to cln-1"
   lncli-sim 1 openchannel $(lightning-cli-sim 1 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
-  bitcoin-cli-sim -generate $channel_confirms > /dev/null
+  bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 1
 
   # lnd-2 -> cln-1
   lncli-sim 2 connect $(lightning-cli-sim 1 getinfo | jq -r '.id')@cln-1 > /dev/null
   echo "open channel from lnd-2 to cln-1"
   lncli-sim 2 openchannel $(lightning-cli-sim 1 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
-  bitcoin-cli-sim -generate $channel_confirms > /dev/null
+  bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 2
   wait-for-cln-channel 1
 
@@ -156,7 +169,7 @@ lightning-init(){
   lncli-sim 1 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2 > /dev/null
   echo "open channel from lnd-1 to cln-2"
   lncli-sim 1 openchannel $(lightning-cli-sim 2 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
-  bitcoin-cli-sim -generate $channel_confirms > /dev/null
+  bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 1
   wait-for-cln-channel 2
 
@@ -164,7 +177,7 @@ lightning-init(){
   lncli-sim 2 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2 > /dev/null
   echo "open channel from lnd-2 to cln-2"
   lncli-sim 2 openchannel $(lightning-cli-sim 2 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
-  bitcoin-cli-sim -generate $channel_confirms > /dev/null
+  bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 2
   wait-for-cln-channel 2
 
