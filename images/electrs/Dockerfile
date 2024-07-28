@@ -1,3 +1,5 @@
+ARG UBUNTU_VERSION=24.04
+
 FROM rust:latest AS builder
 
 RUN apt-get update && apt-get install -y git clang libclang-dev
@@ -12,7 +14,7 @@ RUN cargo build --release --bin electrs
 RUN cp /electrs/target/release/electrs electrs-bitcoin
 RUN cargo build --features liquid --release --bin electrs
 
-FROM debian:bookworm-slim
+FROM ubuntu:${UBUNTU_VERSION}
 
 RUN apt-get update && apt-get install -y curl && \
     apt-get clean all && rm -rf /var/lib/apt/lists/*

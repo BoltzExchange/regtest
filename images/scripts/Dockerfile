@@ -1,3 +1,5 @@
+ARG UBUNTU_VERSION=24.04
+
 FROM boltz/bitcoin-core:latest AS bitcoin-core
 FROM ghcr.io/vulpemventures/elements:latest AS elements-core
 
@@ -8,7 +10,7 @@ FROM boltz/foundry:latest AS anvil
 
 FROM boltz/boltz-client:latest AS boltz-client
 
-FROM ubuntu:24.04
+FROM ubuntu:${UBUNTU_VERSION}
 
 RUN apt-get update && apt-get install -y bash jq libevent-dev
 COPY --from=bitcoin-core /bin/bitcoin-cli /bin/

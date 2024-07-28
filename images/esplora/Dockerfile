@@ -1,4 +1,7 @@
-FROM node:20 AS builder
+ARG NODE_VERSION=lts-bookworm-slim
+ARG NGINX_VERSION=alpine
+
+FROM node:${NODE_VERSION} AS builder
 
 WORKDIR /app
 
@@ -21,7 +24,7 @@ ENV SITE_TITLE="Liquid regtest explorer"
 
 RUN npm run dist
 
-FROM nginx:alpine
+FROM nginx:${NGINX_VERSION}
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist-bitcoin /usr/share/nginx/bitcoin
