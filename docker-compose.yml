@@ -16,8 +16,8 @@ x-services:
     image: boltz/lnd:latest
     restart: always
     depends_on:
-      bitcoind:
-        condition: service_healthy
+      bitcoind-init:
+        condition: service_completed_successfully
     command:
       - --listen=0.0.0.0:9735
       - --rpclisten=0.0.0.0:10009
@@ -47,8 +47,8 @@ x-services:
     image: boltz/c-lightning:latest
     restart: always
     depends_on:
-      bitcoind:
-        condition: service_healthy
+      bitcoind-init:
+        condition: service_completed_successfully
     command:
       - --large-channels
       - --network
@@ -162,7 +162,15 @@ services:
     container_name: boltz-bitcoind
     hostname: bitcoind
     restart: always
-    build: ./images/bitcoind
+    image: boltz/bitcoin-core:latest
+    command:
+      - -regtest
+      - -fallbackfee=0.00000253
+      - -zmqpubrawtx=tcp://0.0.0.0:29000
+      - -zmqpubrawblock=tcp://0.0.0.0:29001
+      - -txindex
+      - -rpcallowip=0.0.0.0/0
+      - -rpcbind=0.0.0.0
     depends_on:
       cleanup:
         condition: service_completed_successfully
@@ -241,6 +249,15 @@ services:
     volumes:
       - lnd2-data:/root/.lnd/
 
+  bitcoind-init:
+    <<: *base-scripts
+    image: boltz/scripts:latest
+    restart: no
+    container_name: boltz-bitcoind-init
+    entrypoint: [ "/bin/bash", "-c", "source /etc/profile.d/utils.sh && bitcoind-init" ]
+    depends_on:
+      - bitcoind
+
   regtest-start:
     <<: *base-scripts
     image: boltz/scripts:latest
@@ -248,8 +265,8 @@ services:
     container_name: boltz-regtest-start
     entrypoint: [ "/bin/bash", "-c", "source /etc/profile.d/utils.sh && regtest-start" ]
     depends_on:
-      bitcoind:
-        condition: service_healthy
+      bitcoind-init:
+        condition: service_completed_successfully
       elementsd:
         condition: service_healthy
       lnd-1:
@@ -279,8 +296,8 @@ services:
     image: boltz/electrs:latest
     build: ./images/electrs
     depends_on:
-      bitcoind:
-        condition: service_healthy
+      bitcoind-init:
+        condition: service_completed_successfully
     entrypoint: [ "electrs-bitcoin" ]
     command:
       - --electrum-rpc-addr
