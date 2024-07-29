@@ -353,8 +353,8 @@ services:
       - --jsonrpc-import
     healthcheck:
       test: [ "CMD-SHELL", "curl -s $(hostname):3003/blocks/tip/height" ]
-      timeout: 1s
-      retries: 5
+      timeout: 15s
+      retries: 10
       interval: 2s
       start_period: 5s
     ports:
