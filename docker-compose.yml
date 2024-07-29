@@ -222,7 +222,7 @@ services:
       start_period: 0s
 
   cln-1:
-    container_name: boltz-cln1
+    container_name: boltz-cln-1
     hostname: cln-1
     <<: *base-cln
     ports:
