@@ -78,6 +78,7 @@ services:
     restart: no
     container_name: boltz-cleanup
     entrypoint: [ "/bin/bash", "-c", "/cleanup.sh" ]
+    profiles: ["default", "ci"]
 
   postgres:
     hostname: postgres
@@ -94,6 +95,7 @@ services:
       - POSTGRES_DB=boltz
       - POSTGRES_USER=boltz
       - POSTGRES_PASSWORD=boltz
+    profiles: ["default", "ci"]
 
   boltz-backend:
     hostname: boltz
@@ -120,6 +122,7 @@ services:
       retries: 10
       interval: 1s
       start_period: 0s
+    profiles: ["default", "ci"]
 
   boltz-web-app:
     hostname: web-app
@@ -130,7 +133,8 @@ services:
     restart: always
     image: ${BOLTZ_WEBAPP_IMAGE}
     ports:
-       - 8080:80
+      - 8080:80
+    profiles: ["default"]
 
   boltz-client:
     hostname: boltz-client
@@ -153,6 +157,7 @@ services:
       - cln2-data:/root/.lightning
       - elements-data:/root/.elements
       - boltz-client-data:/root/.boltz
+    profiles: ["default", "ci"]
 
   anvil:
     hostname: anvil
@@ -168,6 +173,7 @@ services:
       retries: 3
       interval: 1s
       start_period: 0s
+    profiles: ["default", "ci"]
 
   rif-relay:
     hostname: rif-relay
@@ -184,6 +190,7 @@ services:
       start_period: 15s
     ports:
       - 8090:8090
+    profiles: ["default", "ci"]
 
   bitcoind:
     container_name: boltz-bitcoind
@@ -215,6 +222,7 @@ services:
       retries: 1
       interval: 1s
       start_period: 0s
+    profiles: ["default", "ci"]
 
   elementsd:
     container_name: boltz-elementsd
@@ -238,6 +246,7 @@ services:
       retries: 1
       interval: 1s
       start_period: 0s
+    profiles: ["default", "ci"]
 
   cln-1:
     container_name: boltz-cln-1
@@ -247,6 +256,7 @@ services:
       - 9736:9736
     volumes:
       - cln1-data:/root/.lightning
+    profiles: ["default", "ci"]
 
   cln-2:
     container_name: boltz-cln-2
@@ -256,6 +266,7 @@ services:
       - 9737:9736
     volumes:
       - cln2-data:/root/.lightning
+    profiles: ["default", "ci"]
 
   lnd-1:
     <<: *base-lnd
@@ -266,6 +277,7 @@ services:
       - 10009:10009
     volumes:
       - lnd1-data:/root/.lnd/
+    profiles: ["default", "ci"]
 
   lnd-2:
     <<: *base-lnd
@@ -275,6 +287,7 @@ services:
       - 11009:10009
     volumes:
       - lnd2-data:/root/.lnd/
+    profiles: ["default", "ci"]
 
   bitcoind-init:
     <<: *base-scripts
@@ -283,6 +296,7 @@ services:
     entrypoint: [ "/bin/bash", "-c", "source /etc/profile.d/utils.sh && bitcoind-init" ]
     depends_on:
       - bitcoind
+    profiles: ["default", "ci"]
 
   regtest-start:
     <<: *base-scripts
@@ -306,6 +320,7 @@ services:
         condition: service_healthy
       rif-relay:
         condition: service_healthy
+    profiles: ["default", "ci"]
 
   scripts:
     <<: *base-scripts
@@ -314,6 +329,7 @@ services:
     depends_on:
       boltz-client:
         condition: service_healthy
+    profiles: ["default", "ci"]
 
   electrs:
     hostname: electrs-bitcoin
@@ -345,6 +361,7 @@ services:
       - 3002:3002
     volumes:
       - bitcoin-data:/root/.bitcoin
+    profiles: ["default", "ci"]
 
   electrs-liquid:
     hostname: electrs-liquid
@@ -382,6 +399,7 @@ services:
       - 3003:3003
     volumes:
       - elements-data:/root/.elements
+    profiles: ["default", "ci"]
 
   esplora:
     hostname: esplora
@@ -396,6 +414,7 @@ services:
     ports:
       - 4002:4002
       - 4003:4003
+    profiles: ["default"]
 
   otterscan:
     hostname: otterscan
@@ -409,6 +428,7 @@ services:
         condition: service_healthy
     ports:
       - 5100:80
+    profiles: ["default"]
 
 volumes:
   boltz-data:
