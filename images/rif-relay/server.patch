@@ -1,0 +1,41 @@
+diff --git a/config/default.json5 b/config/default.json5
+index b2d355c..52ec78b 100644
+--- a/config/default.json5
++++ b/config/default.json5
+@@ -5,12 +5,12 @@
+     Server 
+   */
+   app: {
+-    url: "http://127.0.0.1", // URL where the relay server will be deployed, it could be localhost or the IP of the host machine.
++    url: "http://127.0.0.1:8090", // URL where the relay server will be deployed, it could be localhost or the IP of the host machine.
+     port: 8090, // port where the relay server will be hosted.
+     devMode: false, // indicates to the server if we are in development mode or not.
+     customReplenish: false, // set if the server uses a custom replenish function or not.
+ 
+-    logLevel: 4 /* The log level for the relay server. Available levels:
++    logLevel: 1 /* The log level for the relay server. Available levels:
+       {
+         TRACE: 0;
+         DEBUG: 1;
+@@ -58,7 +58,7 @@
+     Blockchain node
+   */
+   blockchain: {
+-    rskNodeUrl: "http://127.0.0.1:4444", //  RSK node endpoint URL, where the RSK node is located.
++    rskNodeUrl: "http://anvil:8545", //  RSK node endpoint URL, where the RSK node is located.
+     gasPriceFactor: 1,
+     alertedBlockDelay: 0,
+     minAlertedDelayMS: 0,
+@@ -85,9 +85,9 @@
+     Relay contracts addresses
+   */
+   contracts: {
+-    relayHubAddress: "0x0000000000000000000000000000000000000000", // relay hub contract address, you can retrieve this from the contract summary.
+-    relayVerifierAddress: "0x0000000000000000000000000000000000000000", // relay verifier contract address, you can retrieve this from the contract summary.
+-    deployVerifierAddress: "0x0000000000000000000000000000000000000000", // deploy verifier contract address, you can retrieve this from the contract summary.
++    relayHubAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", // relay hub contract address, you can retrieve this from the contract summary.
++    relayVerifierAddress: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707", // relay verifier contract address, you can retrieve this from the contract summary.
++    deployVerifierAddress: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9", // deploy verifier contract address, you can retrieve this from the contract summary.
+     feesReceiver: "0x0000000000000000000000000000000000000000",
+     trustedVerifiers: [],
+   },

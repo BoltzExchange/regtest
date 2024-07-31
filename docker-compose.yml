@@ -169,6 +169,22 @@ services:
       interval: 1s
       start_period: 0s
 
+  rif-relay:
+    hostname: rif-relay
+    container_name: boltz-rif-relay
+    image: ${RIF_RELAY_IMAGE}
+    depends_on:
+      anvil:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s localhost:8090/chain-info" ]
+      timeout: 1s
+      retries: 10
+      interval: 2s
+      start_period: 15s
+    ports:
+      - 8090:8090
+
   bitcoind:
     container_name: boltz-bitcoind
     hostname: bitcoind
@@ -287,6 +303,8 @@ services:
       cln-2:
         condition: service_healthy
       anvil:
+        condition: service_healthy
+      rif-relay:
         condition: service_healthy
 
   scripts:
