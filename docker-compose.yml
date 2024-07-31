@@ -158,6 +158,8 @@ services:
     hostname: anvil
     container_name: boltz-anvil
     image: ${FOUNDRY_IMAGE}
+    # Chain ID 33 is the regtest of Rootstock
+    entrypoint: "anvil --host 0.0.0.0 --chain-id 33"
     ports:
       - 8545:8545
     healthcheck:
@@ -166,6 +168,22 @@ services:
       retries: 3
       interval: 1s
       start_period: 0s
+
+  rif-relay:
+    hostname: rif-relay
+    container_name: boltz-rif-relay
+    image: ${RIF_RELAY_IMAGE}
+    depends_on:
+      anvil:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s localhost:8090/chain-info" ]
+      timeout: 1s
+      retries: 10
+      interval: 2s
+      start_period: 15s
+    ports:
+      - 8090:8090
 
   bitcoind:
     container_name: boltz-bitcoind
@@ -286,6 +304,8 @@ services:
         condition: service_healthy
       anvil:
         condition: service_healthy
+      rif-relay:
+        condition: service_healthy
 
   scripts:
     <<: *base-scripts
@@ -376,6 +396,19 @@ services:
     ports:
       - 4002:4002
       - 4003:4003
+
+  otterscan:
+    hostname: otterscan
+    container_name: boltz-otterscan
+    restart: always
+    image: ${OTTERSCAN_IMAGE}
+    environment:
+      - OTTERSCAN_CONFIG={"erigonURL":"http://localhost:8545","chainInfo":{"name":"Anvil","faucets":[],"nativeCurrency":{"name":"Rootstock BTC","symbol":"RBTC","decimals":18}}}
+    depends_on:
+      anvil:
+        condition: service_healthy
+    ports:
+      - 5100:80
 
 volumes:
   boltz-data:
