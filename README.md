@@ -38,3 +38,5 @@ Or alternatively, you can `source aliases.sh` to have these convenience scripts 
 
 - Bitcoin: [http://localhost:4002](http://localhost:4002)
 - Elements: [http://localhost:4003](http://localhost:4003)
+
+[Otterscan](https://github.com/otterscan/otterscan) is used as block explorer for Anvil: [http://localhost:5100](http://localhost:5100)
