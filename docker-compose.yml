@@ -96,6 +96,8 @@ services:
       - POSTGRES_USER=boltz
       - POSTGRES_PASSWORD=boltz
     profiles: ["default", "ci"]
+    ports:
+      - 5432:5432
 
   boltz-backend:
     hostname: boltz
