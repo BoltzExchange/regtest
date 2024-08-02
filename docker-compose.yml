@@ -39,7 +39,7 @@ x-services:
       test: [ "CMD-SHELL", "lncli --network=regtest --rpcserver=$$HOSTNAME --network=regtest getinfo" ]
       interval: 1s
       timeout: 1s
-      retries: 10
+      retries: 30
       start_period: 0s
 
   base-cln: &base-cln
