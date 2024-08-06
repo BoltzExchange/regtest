@@ -30,7 +30,7 @@ docker exec -it boltz-scripts bash
 - lightning-cli-sim
 - lncli-sim
 
-Sinds there will be running 2 lnd and cln instances, please use `lightning-cli-sim 1` to call an instance. Both `1` and `2` are available for lnd and cln.
+Since there are two lnd and two cln instances, use `lncli-sim 1` or `lightning-cli-sim 1` to interact with the first instance and `lncli-sim 2` or `lightning-cli-sim 2` to interact with the second.
 
 Or alternatively, you can `source aliases.sh` to have these convenience scripts available on the host machine.
 
