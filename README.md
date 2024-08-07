@@ -26,7 +26,7 @@ docker exec -it boltz-scripts bash
 - bitcoin-cli-sim-server
 - elements-cli-sim-client
 - elements-cli-sim-server
-- boltzcli-sim
+- boltzcli-sim ([boltz-client](https://github.com/BoltzExchange/boltz-client))
 - lightning-cli-sim
 - lncli-sim
 
