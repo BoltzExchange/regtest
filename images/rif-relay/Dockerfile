@@ -6,7 +6,7 @@ RUN git clone https://github.com/rsksmart/rif-relay-contracts.git
 
 WORKDIR /rif-relay-contracts
 
-RUN git checkout 59b67d6ccd901f8e2320e3aea5a5fc937956f34b
+RUN git checkout d72976fd0834f034df1c3c6b068c95e5f6110d59
 COPY contracts.patch .
 RUN git apply contracts.patch
 
@@ -17,7 +17,7 @@ RUN git clone https://github.com/rsksmart/rif-relay-server.git
 
 WORKDIR /rif-relay-server
 
-RUN git checkout a4807e557d8205ab285b8891cef58e8b5fb2994a
+RUN git checkout d26d46dfa732ada658c58d8c03282598753211c0
 COPY server.patch .
 RUN git apply server.patch
 
