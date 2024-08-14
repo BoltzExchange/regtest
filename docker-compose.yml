@@ -111,7 +111,6 @@ services:
     image: ${BOLTZ_BACKEND_IMAGE}
     ports:
       - 9000:9000
-      - 9001:9001
     volumes:
       - boltz-data:/root/.boltz
       - lnd2-data:/data/lnd
@@ -126,11 +125,31 @@ services:
       start_period: 0s
     profiles: ["default", "ci"]
 
+  boltz-backend-nginx:
+    hostname: boltz-nginx
+    container_name: boltz-backend-nginx
+    depends_on:
+      boltz-backend:
+        condition: service_healthy
+    restart: always
+    image: ${NGINX_IMAGE}
+    ports:
+      - 9001:9001
+    volumes:
+      - nginx-data:/etc/nginx/conf.d
+    healthcheck:
+      test: [ "CMD-SHELL", "curl http://localhost:9001/version" ]
+      timeout: 1s
+      retries: 10
+      interval: 1s
+      start_period: 0s
+    profiles: ["default", "ci"]
+
   boltz-web-app:
     hostname: web-app
     container_name: boltz-web-app
     depends_on:
-      boltz-backend:
+      boltz-backend-nginx:
         condition: service_healthy
     restart: always
     image: ${BOLTZ_WEBAPP_IMAGE}
@@ -142,7 +161,7 @@ services:
     hostname: boltz-client
     container_name: boltz-client
     depends_on:
-      boltz-backend:
+      boltz-backend-nginx:
         condition: service_healthy
     restart: always
     image: ${BOLTZ_CLIENT_IMAGE}
@@ -489,3 +508,10 @@ volumes:
       type: none
       o: bind
       device: ./data/lnd2
+  nginx-data:
+    name: boltz-nginx-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/backend-nginx/
