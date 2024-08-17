@@ -40,6 +40,8 @@ NGINX_VERSION = BuildArgument(
     value="alpine",
 )
 
+CLN_VERSION = "24.05"
+
 IMAGES: dict[str, Image] = {
     "electrs": Image(
         tag="latest",
@@ -71,6 +73,10 @@ IMAGES: dict[str, Image] = {
         arguments=[
             UBUNTU_VERSION,
         ],
+    ),
+    "c-lightning-plugins": Image(
+        tag=CLN_VERSION,
+        arguments=[],
     ),
 }
 
@@ -144,6 +150,7 @@ def build_images(
             tag = branch
 
         build_args = [f"{arg.name}={arg.value}" for arg in build_details.arguments]
+        build_args.append(f"VERSION={tag if tag != 'latest' else branch}")
 
         # Add the prefix "--build-arg " to every entry and
         # join the array to a string

@@ -60,6 +60,8 @@ x-services:
       - --developer
       - --dev-fast-gossip
       - --dev-fast-reconnect
+      - --plugin=/root/hold.sh
+      - --plugin=/root/mpay.sh
     expose:
       - 9735
       - 9736
@@ -114,6 +116,7 @@ services:
     volumes:
       - boltz-data:/root/.boltz
       - lnd2-data:/data/lnd
+      - cln2-data:/root/.lightning
       - elements-data:/root/.elements
     volumes_from:
       - bitcoind:ro
@@ -285,6 +288,8 @@ services:
     <<: *base-cln
     ports:
       - 9737:9736
+      - 9738:9292
+      - 9739:9293
     volumes:
       - cln2-data:/root/.lightning
     profiles: ["default", "ci"]
