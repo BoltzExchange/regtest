@@ -181,7 +181,7 @@ services:
       - cln2-data:/root/.lightning
       - elements-data:/root/.elements
       - boltz-client-data:/root/.boltz
-    profiles: ["default", "ci"]
+    profiles: ["default"]
 
   anvil:
     hostname: anvil
