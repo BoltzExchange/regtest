@@ -60,7 +60,7 @@ x-services:
       - --developer
       - --dev-fast-gossip
       - --dev-fast-reconnect
-      - --plugin=/root/hold.sh
+      - --plugin=/root/hold
       - --plugin=/root/mpay.sh
     expose:
       - 9735
