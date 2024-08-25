@@ -70,7 +70,7 @@ x-services:
     healthcheck:
       test: [ "CMD", "lightning-cli", "--network=regtest", "getinfo" ]
       timeout: 1s
-      retries: 10
+      retries: 20
       interval: 1s
       start_period: 0s
 
