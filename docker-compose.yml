@@ -353,7 +353,7 @@ services:
     restart: no
     container_name: boltz-scripts
     depends_on:
-      boltz-client:
+      boltz-backend:
         condition: service_healthy
     profiles: ["default", "ci"]
 
