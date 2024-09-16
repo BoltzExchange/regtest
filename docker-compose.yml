@@ -62,6 +62,7 @@ x-services:
       - --dev-fast-reconnect
       - --plugin=/root/hold
       - --plugin=/root/mpay.sh
+      - --experimental-offers
     expose:
       - 9735
       - 9736
