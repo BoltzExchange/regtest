@@ -181,6 +181,9 @@ lightning-init(){
   wait-for-lnd-channel 2
   wait-for-cln-channel 2
 
+  # cln-1 -> cln-2 P2P connection for offer fetching
+  lightning-cli-sim 1 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2:9735
+
   lightning-sync
 
 }
