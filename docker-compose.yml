@@ -477,7 +477,7 @@ services:
 
   nbxplorer:
     container_name: boltz-nbxplorer
-    image: nicolasdorier/nbxplorer:2.5.4
+    image: ${NBXPLORER_IMAGE}
     restart: unless-stopped
     ports:
       - "32838:32838"
