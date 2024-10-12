@@ -40,7 +40,7 @@ NGINX_VERSION = BuildArgument(
     value="alpine",
 )
 
-CLN_VERSION = "24.05"
+CLN_VERSION = "24.08.1"
 
 IMAGES: dict[str, Image] = {
     "electrs": Image(
