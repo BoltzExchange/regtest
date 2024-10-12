@@ -65,11 +65,15 @@ x-services:
       - --dev-fast-gossip
       - --dev-fast-reconnect
       - --plugin=/root/hold
+      - --plugin=/root/clnurl
       - --plugin=/root/mpay.sh
       - --experimental-offers
+      - --clnurl-host=0.0.0.0
     expose:
       - 9735
       - 9736
+      # LNURL
+      - 3000
     volumes_from:
       - bitcoind:ro
     healthcheck:
