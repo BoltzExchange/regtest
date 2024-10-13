@@ -299,6 +299,7 @@ services:
     <<: *base-cln
     ports:
       - 9736:9736
+      - 3000:3000
     volumes:
       - cln1-data:/root/.lightning
     profiles: ["default", "ci"]
