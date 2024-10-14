@@ -69,6 +69,7 @@ x-services:
       - --plugin=/root/mpay.sh
       - --experimental-offers
       - --clnurl-host=0.0.0.0
+      - --ignore-fee-limits=false
     expose:
       - 9735
       - 9736
