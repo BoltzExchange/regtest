@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y git clang libclang-dev
 
 RUN git clone https://github.com/blockstream/electrs && \
     cd electrs && \
-    git checkout new-index
+    git checkout 6d182d8d0801a40c44a26000ae731a38c1d96218
 
 WORKDIR /electrs
 

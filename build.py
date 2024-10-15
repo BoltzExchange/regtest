@@ -41,10 +41,11 @@ NGINX_VERSION = BuildArgument(
 )
 
 CLN_VERSION = "24.08.1"
+ELECTRS_VERSION = "new-index-6d182d"
 
 IMAGES: dict[str, Image] = {
     "electrs": Image(
-        tag="latest",
+        tag=ELECTRS_VERSION,
         arguments=[
             UBUNTU_VERSION,
         ],
