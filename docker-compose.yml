@@ -404,7 +404,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -s $(hostname):3002/blocks/tip/height"]
       timeout: 1s
-      retries: 5
+      retries: 20
       interval: 2s
       start_period: 5s
     ports:
@@ -442,7 +442,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -s $(hostname):3003/blocks/tip/height"]
       timeout: 15s
-      retries: 10
+      retries: 20
       interval: 2s
       start_period: 5s
     ports:
