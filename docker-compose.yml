@@ -285,7 +285,7 @@ services:
       - 31002:31002
       - 18884:18884
     volumes:
-      - elements-data:/home/elements/.elements
+      - elements-data:/root/.elements
     healthcheck:
       test: ["CMD", "elements-cli", "-getinfo"]
       timeout: 1s
