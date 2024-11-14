@@ -14,7 +14,7 @@ RUN poetry config virtualenvs.in-project true && poetry install --no-dev
 WORKDIR /hold
 
 # TODO: download arm artifacts
-RUN wget https://github.com/BoltzExchange/hold/releases/download/v0.1.0/hold-linux-amd64.tar.gz
+RUN wget https://github.com/BoltzExchange/hold/releases/download/v0.2.0/hold-linux-amd64.tar.gz
 RUN tar -xvf hold-linux-amd64.tar.gz
 
 WORKDIR /clnurl
