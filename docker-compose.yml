@@ -59,6 +59,7 @@ x-services:
       - --bind-addr=0.0.0.0:9735
       - --bitcoin-rpcconnect=bitcoind
       - --bitcoin-rpcport=18443
+      - --grpc-host=0.0.0.0
       - --grpc-port=9736
       - --dev-bitcoind-poll=3
       - --developer
@@ -66,7 +67,6 @@ x-services:
       - --dev-fast-reconnect
       - --plugin=/root/hold
       - --plugin=/root/clnurl
-      - --experimental-offers
       - --clnurl-host=0.0.0.0
       - --ignore-fee-limits=false
     expose:
