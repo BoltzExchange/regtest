@@ -69,6 +69,7 @@ x-services:
       - --plugin=/root/clnurl
       - --clnurl-host=0.0.0.0
       - --ignore-fee-limits=false
+      - --min-emergency-msat=1000000
     expose:
       - 9735
       - 9736
