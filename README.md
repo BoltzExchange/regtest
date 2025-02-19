@@ -4,6 +4,7 @@ An environment for local development and testing, successor of [legend-regtest-e
 
 ## Prerequisites
 [Docker](https://docs.docker.com/engine/install/) or [Orbstack](https://orbstack.dev/) for Apple Silicon based Macs.
+When using OrbStack on macOS, set `export DOCKER_DEFAULT_PLATFORM=linux/amd64` before starting.
 
 ## Usage
 
