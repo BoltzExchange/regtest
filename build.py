@@ -40,7 +40,7 @@ NGINX_VERSION = BuildArgument(
     value="alpine",
 )
 
-CLN_VERSION = "24.11.1"
+CLN_VERSION = "25.02"
 ELECTRS_VERSION = "new-index-6d182d"
 
 IMAGES: dict[str, Image] = {
@@ -65,9 +65,7 @@ IMAGES: dict[str, Image] = {
     ),
     "rif-relay": Image(
         tag="latest",
-        arguments=[
-            NODE_VERSION
-        ],
+        arguments=[NODE_VERSION],
     ),
     "scripts": Image(
         tag="latest",
