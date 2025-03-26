@@ -93,7 +93,16 @@ bitcoind-init() {
   bitcoin-cli-sim-server -rpcwallet=regtest -generate 1
 }
 
+# Needed for hold plugin to get the hooks first
+restart_offer_plugin() {
+    lightning-cli-sim $1 plugin stop /usr/libexec/c-lightning/plugins/offers
+    lightning-cli-sim $1 plugin start /usr/libexec/c-lightning/plugins/offers
+}
+
 regtest-start(){
+  restart_offer_plugin 1
+  restart_offer_plugin 2
+
   regtest-init
   deploy_contracts
 }
