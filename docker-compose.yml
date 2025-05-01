@@ -107,6 +107,7 @@ services:
       - POSTGRES_DB=boltz
       - POSTGRES_USER=boltz
       - POSTGRES_PASSWORD=boltz
+      - TIMESCALEDB_TELEMETRY=off
     profiles: ["default", "ci"]
     ports:
       - 5432:5432
