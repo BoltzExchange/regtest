@@ -108,7 +108,12 @@ bitcoin-cli-sim-client -generate 6
 
 #### Swapping out
 
-Now that you have opened a channel and all the funds are on your side, you can swap out. Visit the [Boltz Web App](http://localhost:8080) to initiate a swap, by providing an on-chain address from your on-chain regtest wallet connected to your lightning node, and use your lightning node to pay the lightning invoice provided by Boltz. Make sure to mine a block for the swap to complete.
+Now that you have opened a channel and all the funds are on your side, you can swap out.
+
+1. Visit the [Boltz Web App](http://localhost:8080) to initiate a swap
+2. Providing an on-chain address from your on-chain regtest wallet connected to your lightning node
+3. Use your lightning node to pay the lightning invoice provided by Boltz.
+4. Make sure to mine a block for the swap to complete.
 
 ### Swapping in
 
