@@ -44,6 +44,10 @@ lncli-sim() {
   lncli --network regtest --rpcserver=lnd-$i:10009 --lnddir=/root/.lnd-"$i" "$@"
 }
 
+arkd-sim() {
+  arkd --url http://arkd:7070 "$@"
+}
+
 # args(i)
 fund_cln_node() {
   address=$(lightning-cli-sim $1 newaddr | jq -r .bech32)
@@ -123,10 +127,62 @@ elements-init(){
   elements-cli-sim-server -rpcwallet=regtest -generate 1
 }
 
+waitForArkdToSync(){
+  while ! arkd-sim wallet balance > /dev/null 2>&1; do
+    sleep 1
+  done
+
+  echo "arkd synced"
+}
+
+arkd-init(){
+  echo "creating arkd wallet"
+  echo "waiting for arkd to be ready..."
+  while ! curl -s http://arkd:7070 > /dev/null 2>&1; do
+    sleep 1
+  done
+  echo "arkd is ready"
+
+  arkd-sim wallet create --password ark
+  arkd-sim wallet unlock --password ark
+  waitForArkdToSync
+
+  bitcoin-cli-sim-server -rpcwallet=regtest sendtoaddress $(arkd-sim wallet address) 25
+  bitcoin-cli-sim-server -rpcwallet=regtest -generate 1
+  echo "funded arkd"
+}
+
+fulmine-init(){
+  echo "creating fulmine wallet"
+  curl -s -X POST http://fulmine:7001/api/v1/wallet/create \
+    -H "Content-Type: application/json" \
+    -d '{"private_key": "693b0b993e69953c35838e96c8c41430e0ae881c2faa1bc95e203cdaec5f3fdf", "password": "ark", "server_url": "http://arkd:7070"}'
+
+  curl -s -X POST http://fulmine:7001/api/v1/wallet/unlock \
+    -H "Content-Type: application/json" \
+    -d '{"password": "ark"}' > /dev/null
+
+  echo "funding fulmine"
+  fulmineAddress=$(curl -s -X GET http://fulmine:7001/api/v1/address | jq -r .address)
+  fulmineAddress=${fulmineAddress#bitcoin:}
+  fulmineAddress=${fulmineAddress%%\?*}
+
+  bitcoin-cli-sim-server -rpcwallet=regtest sendtoaddress $fulmineAddress 1
+  bitcoin-cli-sim-server -rpcwallet=regtest -generate 1
+}
+
 regtest-init(){
   elements-init
   lightning-sync
   lightning-init
+
+  # only run when arkd is available
+  if getent hosts arkd > /dev/null 2>&1; then
+    arkd-init
+    fulmine-init
+  else
+    echo "arkd not available; skipping arkd/fulmine init"
+  fi
 }
 
 lightning-sync(){

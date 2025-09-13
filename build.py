@@ -32,7 +32,7 @@ UBUNTU_VERSION = BuildArgument(
 
 NODE_VERSION = BuildArgument(
     name="NODE_VERSION",
-    value="lts-bookworm",
+    value="lts-trixie",
 )
 
 NGINX_VERSION = BuildArgument(
@@ -75,7 +75,9 @@ IMAGES: dict[str, Image] = {
     ),
     "c-lightning-plugins": Image(
         tag=CLN_VERSION,
-        arguments=[],
+        arguments=[
+            UBUNTU_VERSION,
+        ],
     ),
 }
 
@@ -165,7 +167,7 @@ def build_images(
             )
         else:
             extra_tag = "" if no_latest else f"-t {name}:latest"
-            command = f"docker build -t {name}:{tag} {extra_tag} {args} ."
+            command = f"docker build --load -t {name}:{tag} {extra_tag} {args} ."
 
         if no_cache:
             command = command + " --no-cache"
