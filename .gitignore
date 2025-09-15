@@ -19,3 +19,7 @@ data/bitcoind/*
 data/boltz-client/*
 !data/boltz-client/boltz.toml
 docker-compose.override.yml
+data/arkd/*
+!data/arkd/.gitkeep
+data/fulmine/*
+!data/fulmine/.gitkeep

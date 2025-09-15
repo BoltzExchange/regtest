@@ -10,15 +10,20 @@ FROM boltz/foundry:latest AS anvil
 
 FROM boltz/boltz-client:latest AS boltz-client
 
+FROM ghcr.io/arkade-os/arkd:latest AS arkd
+
 FROM ubuntu:${UBUNTU_VERSION}
 
-RUN apt-get update && apt-get install -y bash jq libevent-dev
+RUN apt-get update && apt-get install -y bash jq libevent-dev curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/
+
 COPY --from=bitcoin-core /bin/bitcoin-cli /bin/
 COPY --from=elements-core /usr/local/bin/elements-cli /bin/
 COPY --from=lnd /bin/lncli /bin/
 COPY --from=cln /bin/lightning-cli /bin/
 COPY --from=anvil /root/.foundry/bin/cast /bin/
 COPY --from=boltz-client /usr/bin/boltzcli /bin/
+COPY --from=arkd /app/arkd /bin/
 
 COPY utils.sh /etc/profile.d/utils.sh
 RUN chmod +x /etc/profile.d/utils.sh

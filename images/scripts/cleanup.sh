@@ -29,6 +29,8 @@ WIPE_DIRS=(
     ".lnd-2"
     ".boltz-backend"
     ".boltz-client"
+    ".arkd"
+    ".fulmine"
 )
 
 for dir in "${WIPE_DIRS[@]}"; do

@@ -1,6 +1,7 @@
 ARG VERSION=latest
+ARG UBUNTU_VERSION=24.04
 
-FROM ubuntu:22.04 AS build
+FROM ubuntu:${UBUNTU_VERSION} AS build
 
 RUN apt-get update && apt-get -y upgrade
 RUN apt-get -y install \

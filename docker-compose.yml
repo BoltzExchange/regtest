@@ -10,6 +10,8 @@ x-services:
       - lnd2-data:/root/.lnd-2
       - boltz-client-data:/root/.boltz-client
       - boltz-data:/root/.boltz-backend
+      - arkd-data:/root/.arkd
+      - fulmine-data:/root/.fulmine
 
   base-lnd: &base-lnd
     image: ${LND_IMAGE}
@@ -505,9 +507,88 @@ services:
     depends_on:
       bitcoind-init:
         condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bash",
+          "-c",
+          "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/32838'",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     volumes:
       - bitcoin-data:/root/.bitcoin
-    profiles: ["btcpay"]
+    profiles: ["btcpay", "ark"]
+
+  arkd-wallet:
+    image: ${ARKD_WALLET_IMAGE}
+    container_name: arkd-wallet
+    depends_on:
+      nbxplorer:
+        condition: service_healthy
+    ports:
+      - "6060:6060"
+    environment:
+      - ARKD_WALLET_LOG_LEVEL=5
+      - ARKD_WALLET_NBXPLORER_URL=http://nbxplorer:32838
+      - ARKD_WALLET_DATADIR=./data/regtest
+      - ARKD_WALLET_NETWORK=regtest
+      - ARKD_WALLET_SIGNER_KEY=afcd3fa10f82a05fddc9574fdb13b3991b568e89cc39a72ba4401df8abef35f0
+    profiles: ["ark"]
+
+  arkd:
+    image: ${ARKD_IMAGE}
+    container_name: arkd
+    depends_on:
+      arkd-wallet:
+        condition: service_started
+    ports:
+      - "7070:7070"
+    environment:
+      - ARKD_LOG_LEVEL=6
+      - ARKD_NO_MACAROONS=true
+      - ARKD_VTXO_TREE_EXPIRY=20
+      - ARKD_SCHEDULER_TYPE=block
+      - ARKD_UNILATERAL_EXIT_DELAY=512
+      - ARKD_BOARDING_EXIT_DELAY=1024
+      - ARKD_DATADIR=./data/regtest
+      - ARKD_WALLET_ADDR=arkd-wallet:6060
+      - ARKD_ESPLORA_URL=http://electrs-bitcoin:3002
+      - ARKD_VTXO_MIN_AMOUNT=1
+      - ARKD_LIVE_STORE_TYPE=inmemory
+      - ARKD_EVENT_DB_TYPE=badger
+      - ARKD_DB_TYPE=sqlite
+      - ARKD_ROUND_INTERVAL=10
+    volumes:
+      - arkd-data:/app/data
+    profiles: ["ark"]
+
+  fulmine:
+    image: ${FULMINE_IMAGE}
+    container_name: fulmine
+    restart: unless-stopped
+    depends_on:
+      arkd:
+        condition: service_started
+    ports:
+      - "7000:7000"
+      - "7001:7001"
+    environment:
+      - FULMINE_NO_MACAROONS=true
+      - FULMINE_HTTP_PORT=7001
+      - FULMINE_ARK_SERVER=http://arkd:7070
+      - FULMINE_ESPLORA_URL=http://electrs-bitcoin:3002
+      - FULMINE_UNLOCKER_TYPE=env
+      - FULMINE_UNLOCKER_PASSWORD=ark
+      - FULMINE_DISABLE_TELEMETRY=true
+    volumes:
+      - fulmine-data:/app/data
+    profiles: ["ark"]
 
 volumes:
   boltz-data:
@@ -573,3 +654,17 @@ volumes:
       type: none
       o: bind
       device: ./data/backend-nginx/
+  arkd-data:
+    name: arkd-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/arkd
+  fulmine-data:
+    name: fulmine-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/fulmine
