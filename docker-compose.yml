@@ -143,6 +143,7 @@ services:
   boltz-backend:
     hostname: boltz
     container_name: boltz-backend
+    user: "${UID:-1000}:${GID:-1000}"
     depends_on:
       regtest-start:
         condition: service_completed_successfully
@@ -150,15 +151,13 @@ services:
         condition: service_healthy
     restart: always
     image: ${BOLTZ_BACKEND_IMAGE}
-    ports:
-      - 9000:9000
+    command: ["--datadir", "/boltz-data", "--configpath", "/boltz-data/boltz.conf"]
     volumes:
-      - boltz-data:/root/.boltz
+      - boltz-data:/boltz-data
       - lnd2-data:/data/lnd
-      - cln2-data:/root/.lightning
-      - elements-data:/root/.elements
-    volumes_from:
-      - bitcoind:ro
+      - cln2-data:/data/lightning
+      - elements-data:/data/elements
+      - bitcoin-data:/data/bitcoin
     healthcheck:
       test: ['CMD-SHELL', "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/9000'"]
       timeout: 1s
