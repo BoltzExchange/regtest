@@ -104,14 +104,12 @@ restart_offer_plugin() {
 }
 
 regtest-start(){
+  deploy_contracts
+
   restart_offer_plugin 1
   restart_offer_plugin 2
 
-  # Hold invoice plugin on the clients node blocks fetching invoices for offers
-  lightning-cli-sim 1 plugin stop /root/hold
-
   regtest-init
-  deploy_contracts
 }
 
 elements-init(){
