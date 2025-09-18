@@ -16,6 +16,7 @@ x-services:
   base-lnd: &base-lnd
     image: ${LND_IMAGE}
     restart: always
+    user: '${UID:-1000}:${GID:-1000}'
     depends_on:
       bitcoind-init:
         condition: service_completed_successfully
@@ -29,9 +30,10 @@ x-services:
       - --bitcoind.rpchost=bitcoind
       - --bitcoind.zmqpubrawtx=bitcoind:29000
       - --bitcoind.zmqpubrawblock=bitcoind:29001
-      - --bitcoind.rpccookie=/root/.bitcoin/regtest/.cookie
+      - --bitcoind.rpccookie=/app/bitcoin/regtest/.cookie
       - --noseedbackup
       - --protocol.wumbo-channels
+      - --lnddir=/app/lnd
     expose:
       - 8081
       - 9735
@@ -40,8 +42,9 @@ x-services:
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "lncli --network=regtest --rpcserver=$$HOSTNAME --network=regtest getinfo",
+          'CMD-SHELL',
+          'lncli --network=regtest --lnddir=/app/lnd --rpcserver=$$HOSTNAME
+          getinfo',
         ]
       interval: 1s
       timeout: 1s
@@ -51,10 +54,12 @@ x-services:
   base-cln: &base-cln
     image: ${CLN_IMAGE}
     restart: always
+    user: '${UID:-1000}:${GID:-1000}'
     depends_on:
       bitcoind-init:
         condition: service_completed_successfully
     command:
+      - --lightning-dir=/app/lightning
       - --large-channels
       - --network
       - regtest
@@ -67,11 +72,12 @@ x-services:
       - --developer
       - --dev-fast-gossip
       - --dev-fast-reconnect
-      - --plugin=/root/hold
-      - --plugin=/root/clnurl
+      - --plugin=/usr/local/bin/hold
+      - --plugin=/usr/local/bin/clnurl
       - --clnurl-host=0.0.0.0
       - --ignore-fee-limits=false
       - --min-emergency-msat=1000000
+      - --bitcoin-datadir=/app/bitcoin
     expose:
       - 9735
       - 9736
@@ -80,7 +86,14 @@ x-services:
     volumes_from:
       - bitcoind:ro
     healthcheck:
-      test: ["CMD", "lightning-cli", "--network=regtest", "getinfo"]
+      test:
+        [
+          'CMD',
+          'lightning-cli',
+          '--lightning-dir=/app/lightning',
+          '--network=regtest',
+          'getinfo',
+        ]
       timeout: 1s
       retries: 20
       interval: 1s
@@ -91,8 +104,8 @@ services:
     <<: *base-scripts
     restart: no
     container_name: boltz-cleanup
-    entrypoint: ["/bin/bash", "-c", "/cleanup.sh"]
-    profiles: ["default", "ci"]
+    entrypoint: ['/bin/bash', '-c', '/cleanup.sh']
+    profiles: ['default', 'ci', 'backend-dev']
 
   postgres:
     hostname: postgres
@@ -100,7 +113,7 @@ services:
     restart: always
     image: ${POSTGRES_IMAGE}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready --dbname boltz --username boltz"]
+      test: ['CMD-SHELL', 'pg_isready --dbname boltz --username boltz']
       interval: 5s
       timeout: 30s
       retries: 10
@@ -109,11 +122,23 @@ services:
       - POSTGRES_DB=boltz
       - POSTGRES_USER=boltz
       - POSTGRES_PASSWORD=boltz
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
     ports:
       - 5432:5432
     expose:
       - 5432
+
+  dragonfly:
+    hostname: dragonfly
+    container_name: boltz-dragonfly
+    restart: always
+    image: ${DRAGONFLY_IMAGE}
+    command: ['--cache_mode', '--maxmemory', '8g']
+    ports:
+      - 6379:6379
+    ulimits:
+      memlock: -1
+    profiles: ['backend-dev']
 
   boltz-backend:
     hostname: boltz
@@ -135,12 +160,12 @@ services:
     volumes_from:
       - bitcoind:ro
     healthcheck:
-      test: ["CMD-SHELL", "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/9000'"]
+      test: ['CMD-SHELL', "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/9000'"]
       timeout: 1s
       retries: 10
       interval: 1s
       start_period: 0s
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci']
 
   boltz-backend-nginx:
     hostname: boltz-nginx
@@ -155,12 +180,12 @@ services:
     volumes:
       - nginx-data:/etc/nginx/conf.d
     healthcheck:
-      test: ["CMD-SHELL", "curl http://localhost:9001/version"]
+      test: ['CMD-SHELL', 'curl http://localhost:9001/version']
       timeout: 1s
       retries: 10
       interval: 1s
       start_period: 0s
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci']
 
   boltz-web-app:
     hostname: web-app
@@ -172,7 +197,7 @@ services:
     image: ${BOLTZ_WEBAPP_IMAGE}
     ports:
       - 8080:80
-    profiles: ["default"]
+    profiles: ['default']
 
   boltz-client:
     hostname: boltz-client
@@ -186,7 +211,7 @@ services:
       - 9002:9002
       - 9003:9003
     healthcheck:
-      test: ["CMD", "boltzcli", "--host", "boltz-client", "getinfo"]
+      test: ['CMD', 'boltzcli', '--host', 'boltz-client', 'getinfo']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -195,23 +220,23 @@ services:
       - cln2-data:/root/.lightning
       - elements-data:/root/.elements
       - boltz-client-data:/root/.boltz
-    profiles: ["default"]
+    profiles: ['default']
 
   anvil:
     hostname: anvil
     container_name: boltz-anvil
     image: ${FOUNDRY_IMAGE}
     # Chain ID 33 is the regtest of Rootstock
-    entrypoint: "anvil --host 0.0.0.0 --chain-id 33"
+    entrypoint: 'anvil --host 0.0.0.0 --chain-id 33'
     ports:
       - 8545:8545
     healthcheck:
-      test: ["CMD-SHELL", "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/8545'"]
+      test: ['CMD-SHELL', "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/8545'"]
       timeout: 1s
       retries: 3
       interval: 1s
       start_period: 0s
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
 
   rif-relay:
     hostname: rif-relay
@@ -221,22 +246,24 @@ services:
       anvil:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -s localhost:8090/chain-info"]
+      test: ['CMD-SHELL', 'curl -s localhost:8090/chain-info']
       timeout: 1s
       retries: 10
       interval: 2s
       start_period: 15s
     ports:
       - 8090:8090
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
 
   bitcoind:
     container_name: boltz-bitcoind
     hostname: bitcoind
     restart: always
     image: ${BITCOIN_CORE_IMAGE}
+    user: '${UID:-1000}:${GID:-1000}'
     command:
       - -regtest
+      - -datadir=/app/bitcoin
       - -fallbackfee=0.00000253
       - -zmqpubrawtx=tcp://0.0.0.0:29000
       - -zmqpubrawblock=tcp://0.0.0.0:29001
@@ -244,6 +271,7 @@ services:
       - -rpcallowip=0.0.0.0/0
       - -rpcbind=0.0.0.0
       - -deprecatedrpc=warnings
+      - -rpcauth=backend:b2df2fbc6cd2569073e5b5860011e00c$7930df46dff1fc5690973aef153e2106ece57104d7d16b737fb775131bc99ea4
     depends_on:
       cleanup:
         condition: service_completed_successfully
@@ -256,21 +284,21 @@ services:
       - 29000:29000
       - 29001:29001
     volumes:
-      - bitcoin-data:/root/.bitcoin
+      - bitcoin-data:/app/bitcoin
     healthcheck:
       test:
         [
-          "CMD",
-          "bitcoin-cli",
-          "--rpccookiefile=/root/.bitcoin/regtest/.cookie",
-          "-regtest",
-          "getblockchaininfo",
+          'CMD',
+          'bitcoin-cli',
+          '--rpccookiefile=/app/bitcoin/regtest/.cookie',
+          '-regtest',
+          'getblockchaininfo',
         ]
       timeout: 1s
       retries: 1
       interval: 1s
       start_period: 0s
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
 
   elementsd:
     container_name: boltz-elementsd
@@ -289,12 +317,12 @@ services:
     volumes:
       - elements-data:/root/.elements
     healthcheck:
-      test: ["CMD", "elements-cli", "-getinfo"]
+      test: ['CMD', 'elements-cli', '-getinfo']
       timeout: 1s
       retries: 1
       interval: 1s
       start_period: 0s
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
 
   cln-1:
     container_name: boltz-cln-1
@@ -302,10 +330,11 @@ services:
     <<: *base-cln
     ports:
       - 9736:9736
+      - 9292:9292
       - 3000:3000
     volumes:
-      - cln1-data:/root/.lightning
-    profiles: ["default", "ci"]
+      - cln1-data:/app/lightning
+    profiles: ['default', 'ci', 'backend-dev']
 
   cln-2:
     container_name: boltz-cln-2
@@ -316,8 +345,8 @@ services:
       - 9738:9292
       - 9739:9293
     volumes:
-      - cln2-data:/root/.lightning
-    profiles: ["default", "ci"]
+      - cln2-data:/app/lightning
+    profiles: ['default', 'ci', 'backend-dev']
 
   lnd-1:
     <<: *base-lnd
@@ -327,8 +356,8 @@ services:
       - 8081:8081
       - 10009:10009
     volumes:
-      - lnd1-data:/root/.lnd/
-    profiles: ["default", "ci"]
+      - lnd1-data:/app/lnd/
+    profiles: ['default', 'ci', 'backend-dev']
 
   lnd-2:
     <<: *base-lnd
@@ -337,25 +366,25 @@ services:
     ports:
       - 11009:10009
     volumes:
-      - lnd2-data:/root/.lnd/
-    profiles: ["default", "ci"]
+      - lnd2-data:/app/lnd/
+    profiles: ['default', 'ci', 'backend-dev']
 
   bitcoind-init:
     <<: *base-scripts
     restart: no
     container_name: boltz-bitcoind-init
     entrypoint:
-      ["/bin/bash", "-c", "source /etc/profile.d/utils.sh && bitcoind-init"]
+      ['/bin/bash', '-c', 'source /etc/profile.d/utils.sh && bitcoind-init']
     depends_on:
       - bitcoind
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
 
   regtest-start:
     <<: *base-scripts
     restart: no
     container_name: boltz-regtest-start
     entrypoint:
-      ["/bin/bash", "-c", "source /etc/profile.d/utils.sh && regtest-start"]
+      ['/bin/bash', '-c', 'source /etc/profile.d/utils.sh && regtest-start']
     depends_on:
       bitcoind-init:
         condition: service_completed_successfully
@@ -373,16 +402,13 @@ services:
         condition: service_healthy
       rif-relay:
         condition: service_healthy
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
 
   scripts:
     <<: *base-scripts
     restart: no
     container_name: boltz-scripts
-    depends_on:
-      boltz-backend:
-        condition: service_healthy
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
 
   electrs:
     hostname: electrs-bitcoin
@@ -392,7 +418,7 @@ services:
     depends_on:
       bitcoind-init:
         condition: service_completed_successfully
-    entrypoint: ["electrs-bitcoin"]
+    entrypoint: ['electrs-bitcoin']
     command:
       - --electrum-rpc-addr
       - electrs:19001
@@ -404,7 +430,7 @@ services:
       - regtest
       - --jsonrpc-import
     healthcheck:
-      test: ["CMD-SHELL", "curl -s $(hostname):3002/blocks/tip/height"]
+      test: ['CMD-SHELL', 'curl -s $(hostname):3002/blocks/tip/height']
       timeout: 1s
       retries: 20
       interval: 2s
@@ -414,7 +440,7 @@ services:
       - 3002:3002
     volumes:
       - bitcoin-data:/root/.bitcoin
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
 
   electrs-liquid:
     hostname: electrs-liquid
@@ -424,7 +450,7 @@ services:
     depends_on:
       elementsd:
         condition: service_healthy
-    entrypoint: ["electrs-liquid"]
+    entrypoint: ['electrs-liquid']
     command:
       - --electrum-rpc-addr
       - electrs-liquid:19002
@@ -442,7 +468,7 @@ services:
       - regtest
       - --jsonrpc-import
     healthcheck:
-      test: ["CMD-SHELL", "curl -s $(hostname):3003/blocks/tip/height"]
+      test: ['CMD-SHELL', 'curl -s $(hostname):3003/blocks/tip/height']
       timeout: 15s
       retries: 20
       interval: 2s
@@ -452,7 +478,7 @@ services:
       - 3003:3003
     volumes:
       - elements-data:/root/.elements
-    profiles: ["default", "ci"]
+    profiles: ['default', 'ci', 'backend-dev']
 
   esplora:
     hostname: esplora
@@ -467,7 +493,7 @@ services:
     ports:
       - 4002:4002
       - 4003:4003
-    profiles: ["default", "esplora"]
+    profiles: ['default', 'esplora', 'backend-dev']
 
   otterscan:
     hostname: otterscan
@@ -475,33 +501,36 @@ services:
     restart: always
     image: ${OTTERSCAN_IMAGE}
     environment:
-      - OTTERSCAN_CONFIG={"erigonURL":"http://localhost:8545","chainInfo":{"name":"Anvil","faucets":[],"nativeCurrency":{"name":"Rootstock BTC","symbol":"RBTC","decimals":18}}}
+      - OTTERSCAN_CONFIG={"erigonURL":"http://localhost:8545","chainInfo":{"name":"Anvil","faucets":[],"nativeCurrency":{"name":"Rootstock
+        BTC","symbol":"RBTC","decimals":18}}}
     depends_on:
       anvil:
         condition: service_healthy
     ports:
       - 5100:80
-    profiles: ["default"]
+    profiles: ['default', 'backend-dev']
 
   nbxplorer:
     container_name: boltz-nbxplorer
     image: ${NBXPLORER_IMAGE}
     restart: unless-stopped
     ports:
-      - "32838:32838"
+      - '32838:32838'
     expose:
-      - "32838"
+      - '32838'
     environment:
       NBXPLORER_NETWORK: regtest
-      NBXPLORER_CHAINS: "btc"
+      NBXPLORER_CHAINS: 'btc'
       NBXPLORER_BTCRPCURL: http://bitcoind:18443/
-      NBXPLORER_BTCRPCCOOKIEFILE: /root/.bitcoin/regtest/.cookie
+      NBXPLORER_BTCRPCCOOKIEFILE: /app/bitcoin/regtest/.cookie
       NBXPLORER_BTCNODEENDPOINT: bitcoind:18444
       NBXPLORER_BIND: 0.0.0.0:32838
       NBXPLORER_MINGAPSIZE: 5
       NBXPLORER_MAXGAPSIZE: 10
       NBXPLORER_VERBOSE: 1
-      NBXPLORER_POSTGRES: User ID=boltz;Password=boltz;Include Error Detail=true;Host=postgres;Port=5432;Database=nbxplorer
+      NBXPLORER_POSTGRES:
+        User ID=boltz;Password=boltz;Include Error
+        Detail=true;Host=postgres;Port=5432;Database=nbxplorer
       NBXPLORER_EXPOSERPC: 1
       NBXPLORER_NOAUTH: 1
     depends_on:
@@ -512,9 +541,9 @@ services:
     healthcheck:
       test:
         [
-          "CMD",
-          "bash",
-          "-c",
+          'CMD',
+          'bash',
+          '-c',
           "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/32838'",
         ]
       interval: 30s
@@ -522,8 +551,8 @@ services:
       retries: 3
       start_period: 40s
     volumes:
-      - bitcoin-data:/root/.bitcoin
-    profiles: ["btcpay", "ark"]
+      - bitcoin-data:/app/bitcoin
+    profiles: ['btcpay', 'ark']
 
   arkd-wallet:
     image: ${ARKD_WALLET_IMAGE}
@@ -532,14 +561,14 @@ services:
       nbxplorer:
         condition: service_healthy
     ports:
-      - "6060:6060"
+      - '6060:6060'
     environment:
       - ARKD_WALLET_LOG_LEVEL=5
       - ARKD_WALLET_NBXPLORER_URL=http://nbxplorer:32838
       - ARKD_WALLET_DATADIR=./data/regtest
       - ARKD_WALLET_NETWORK=regtest
       - ARKD_WALLET_SIGNER_KEY=afcd3fa10f82a05fddc9574fdb13b3991b568e89cc39a72ba4401df8abef35f0
-    profiles: ["ark"]
+    profiles: ['ark']
 
   arkd:
     image: ${ARKD_IMAGE}
@@ -548,7 +577,7 @@ services:
       arkd-wallet:
         condition: service_started
     ports:
-      - "7070:7070"
+      - '7070:7070'
     environment:
       - ARKD_LOG_LEVEL=6
       - ARKD_NO_MACAROONS=true
@@ -566,7 +595,7 @@ services:
       - ARKD_ROUND_INTERVAL=10
     volumes:
       - arkd-data:/app/data
-    profiles: ["ark"]
+    profiles: ['ark']
 
   fulmine:
     image: ${FULMINE_IMAGE}
@@ -576,8 +605,8 @@ services:
       arkd:
         condition: service_started
     ports:
-      - "7000:7000"
-      - "7001:7001"
+      - '7000:7000'
+      - '7001:7001'
     environment:
       - FULMINE_NO_MACAROONS=true
       - FULMINE_HTTP_PORT=7001
@@ -588,7 +617,7 @@ services:
       - FULMINE_DISABLE_TELEMETRY=true
     volumes:
       - fulmine-data:/app/data
-    profiles: ["ark"]
+    profiles: ['ark']
 
 volumes:
   boltz-data:

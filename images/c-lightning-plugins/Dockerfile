@@ -15,10 +15,8 @@ RUN apt-get -y install \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-RUN git clone https://github.com/BoltzExchange/hold.git
-
+RUN git clone --depth 1 --branch v0.3.2 https://github.com/BoltzExchange/hold.git /hold
 WORKDIR /hold
-RUN git checkout 10c572a8abea39c73bf3323fbb5fa4739ca52279
 RUN cargo build --release
 
 FROM boltz/c-lightning:${VERSION} AS builder
@@ -33,7 +31,7 @@ RUN tar -xvf clnurl.tar.gz
 
 FROM boltz/c-lightning:${VERSION}
 
-COPY --from=build /hold/target/release/hold /root/hold
-COPY --from=builder /clnurl/clnurl /root/clnurl
+COPY --from=build /hold/target/release/hold /usr/local/bin/hold
+COPY --from=builder /clnurl/clnurl /usr/local/bin/clnurl
 
 ENTRYPOINT ["lightningd"]
