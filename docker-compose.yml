@@ -143,7 +143,7 @@ services:
   boltz-backend:
     hostname: boltz
     container_name: boltz-backend
-    user: "${UID:-1000}:${GID:-1000}"
+    user: '${UID:-1000}:${GID:-1000}'
     depends_on:
       regtest-start:
         condition: service_completed_successfully
@@ -151,7 +151,8 @@ services:
         condition: service_healthy
     restart: always
     image: ${BOLTZ_BACKEND_IMAGE}
-    command: ["--datadir", "/boltz-data", "--configpath", "/boltz-data/boltz.conf"]
+    command:
+      ['--datadir', '/boltz-data', '--configpath', '/boltz-data/boltz.conf']
     volumes:
       - boltz-data:/boltz-data
       - lnd2-data:/data/lnd
@@ -549,7 +550,7 @@ services:
       start_period: 40s
     volumes:
       - bitcoin-data:/app/bitcoin
-    profiles: ['btcpay', 'ark']
+    profiles: ['btcpay', 'ark', 'backend-dev']
 
   arkd-wallet:
     image: ${ARKD_WALLET_IMAGE}
@@ -565,7 +566,7 @@ services:
       - ARKD_WALLET_DATADIR=./data/regtest
       - ARKD_WALLET_NETWORK=regtest
       - ARKD_WALLET_SIGNER_KEY=afcd3fa10f82a05fddc9574fdb13b3991b568e89cc39a72ba4401df8abef35f0
-    profiles: ['ark']
+    profiles: ['ark', 'backend-dev']
 
   arkd:
     image: ${ARKD_IMAGE}
@@ -592,7 +593,7 @@ services:
       - ARKD_ROUND_INTERVAL=10
     volumes:
       - arkd-data:/app/data
-    profiles: ['ark']
+    profiles: ['ark', 'backend-dev']
 
   fulmine:
     image: ${FULMINE_IMAGE}
@@ -614,7 +615,7 @@ services:
       - FULMINE_DISABLE_TELEMETRY=true
     volumes:
       - fulmine-data:/app/data
-    profiles: ['ark']
+    profiles: ['ark', 'backend-dev']
 
 volumes:
   boltz-data:
