@@ -252,7 +252,7 @@ services:
       start_period: 15s
     ports:
       - 8090:8090
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci']
 
   bitcoind:
     container_name: boltz-bitcoind
@@ -398,8 +398,6 @@ services:
       cln-2:
         condition: service_healthy
       anvil:
-        condition: service_healthy
-      rif-relay:
         condition: service_healthy
     profiles: ['default', 'ci', 'backend-dev']
 
