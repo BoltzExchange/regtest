@@ -77,6 +77,14 @@ IMAGES: dict[str, Image] = {
         tag=CLN_VERSION,
         arguments=[
             UBUNTU_VERSION,
+            BuildArgument(
+                name="HOLD_VERSION",
+                value="v0.3.2",
+            ),
+            BuildArgument(
+                name="CLNURL_VERSION",
+                value="v0.1.0",
+            ),
         ],
     ),
 }

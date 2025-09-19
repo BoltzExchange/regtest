@@ -3,6 +3,8 @@ ARG UBUNTU_VERSION=24.04
 
 FROM ubuntu:${UBUNTU_VERSION} AS build
 
+ARG HOLD_VERSION=v0.3.2
+
 RUN apt-get update && apt-get -y upgrade
 RUN apt-get -y install \
     gcc \
@@ -15,18 +17,26 @@ RUN apt-get -y install \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-RUN git clone --depth 1 --branch v0.3.2 https://github.com/BoltzExchange/hold.git /hold
+RUN git clone --depth 1 --branch ${HOLD_VERSION} https://github.com/BoltzExchange/hold.git /hold
 WORKDIR /hold
 RUN cargo build --release
 
 FROM boltz/c-lightning:${VERSION} AS builder
 
+ARG CLNURL_VERSION=v0.1.0
+
 RUN apt-get update && apt-get install -y git pkg-config wget
 
 WORKDIR /clnurl
 
-# TODO: download arm artifacts
-RUN wget https://github.com/michael1011/clnurl/releases/download/v0.1.0/clnurl.tar.gz
+# Download the correct clnurl artifact based on architecture
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        wget https://github.com/michael1011/clnurl/releases/download/${CLNURL_VERSION}/clnurl.tar.gz; \
+    else \
+        wget https://github.com/michael1011/clnurl/releases/download/${CLNURL_VERSION}/clnurl-arm64.tar.gz -O clnurl.tar.gz; \
+    fi
+
 RUN tar -xvf clnurl.tar.gz
 
 FROM boltz/c-lightning:${VERSION}
