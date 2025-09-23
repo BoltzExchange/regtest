@@ -24,6 +24,7 @@ x-services:
       - --listen=0.0.0.0:9735
       - --rpclisten=0.0.0.0:10009
       - --restlisten=0.0.0.0:8081
+      - --bitcoin.timelockdelta=18
       - --bitcoin.active
       - --bitcoin.regtest
       - --bitcoin.node=bitcoind
@@ -78,6 +79,8 @@ x-services:
       - --ignore-fee-limits=false
       - --min-emergency-msat=1000000
       - --bitcoin-datadir=/app/bitcoin
+      - --cltv-delta=18
+      - --cltv-final=18
     expose:
       - 9735
       - 9736
