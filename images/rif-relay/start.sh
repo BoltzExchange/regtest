@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 cleanup() {
     echo 'SIGINT or SIGTERM received, exiting'

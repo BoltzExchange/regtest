@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 run_in_container() {
     docker exec -it boltz-scripts bash -c "source /etc/profile.d/utils.sh && $(printf '%q ' "$@")"
