@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 STATE=$(docker container ls --filter name=boltz-scripts --format '{{.State}}')
 

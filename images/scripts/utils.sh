@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 BITCOIN_CLI_PARAMS="-rpcconnect=bitcoind -regtest -rpccookiefile=/root/.bitcoin/regtest/.cookie"
 
 function bitcoin-cli-sim() {
