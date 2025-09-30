@@ -215,6 +215,7 @@ lightning-init(){
   lncli-sim 1 openchannel $(lncli-sim 2 getinfo | jq -r '.identity_pubkey') $channel_size $balance_size > /dev/null
   bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 1
+  lightning-sync
 
   # lnd-1 -> cln-1
   lncli-sim 1 connect $(lightning-cli-sim 1 getinfo | jq -r '.id')@cln-1 > /dev/null
@@ -222,6 +223,7 @@ lightning-init(){
   lncli-sim 1 openchannel $(lightning-cli-sim 1 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
   bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 1
+  lightning-sync
 
   # lnd-2 -> cln-1
   lncli-sim 2 connect $(lightning-cli-sim 1 getinfo | jq -r '.id')@cln-1 > /dev/null
@@ -230,6 +232,7 @@ lightning-init(){
   bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 2
   wait-for-cln-channel 1
+  lightning-sync
 
   # lnd-1 -> cln-2
   lncli-sim 1 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2 > /dev/null
@@ -238,6 +241,7 @@ lightning-init(){
   bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
   wait-for-lnd-channel 1
   wait-for-cln-channel 2
+  lightning-sync
 
   # lnd-2 -> cln-2
   lncli-sim 2 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2 > /dev/null
