@@ -577,6 +577,8 @@ services:
     image: ${ARKD_IMAGE}
     container_name: arkd
     depends_on:
+      regtest-start:
+        condition: service_completed_successfully
       arkd-wallet:
         condition: service_started
     ports:
