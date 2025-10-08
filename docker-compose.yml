@@ -577,8 +577,6 @@ services:
     image: ${ARKD_IMAGE}
     container_name: arkd
     depends_on:
-      regtest-start:
-        condition: service_completed_successfully
       arkd-wallet:
         condition: service_started
     ports:
@@ -623,6 +621,16 @@ services:
     volumes:
       - fulmine-data:/app/data
     profiles: ['ark', 'backend-dev']
+
+  backend-dev-ready:
+    <<: *base-scripts
+    restart: no
+    container_name: boltz-backend-dev-ready
+    entrypoint: ['/bin/bash', '-c', 'echo "Backend dev environment ready"']
+    depends_on:
+      regtest-start:
+        condition: service_completed_successfully
+    profiles: ['backend-dev']
 
 volumes:
   boltz-data:
