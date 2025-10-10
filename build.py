@@ -25,6 +25,36 @@ class Image:
     arguments: list[BuildArgument]
 
 
+def load_env_file(env_path: Path) -> dict[str, str]:
+    """Load KEY=VALUE pairs from a .env file, ignoring comments and blanks."""
+    env: dict[str, str] = {}
+    if not env_path.exists():
+        return env
+
+    try:
+        with env_path.open("r") as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+                # Strip optional surrounding quotes
+                if (value.startswith('"') and value.endswith('"')) or (
+                    value.startswith("'") and value.endswith("'")
+                ):
+                    value = value[1:-1]
+                env[key] = value
+    except Exception:
+        # Fail silently and return what we have to avoid breaking builds
+        pass
+
+    return env
+
+
 UBUNTU_VERSION = BuildArgument(
     name="UBUNTU_VERSION",
     value="24.04",
@@ -71,6 +101,10 @@ IMAGES: dict[str, Image] = {
         tag="latest",
         arguments=[
             UBUNTU_VERSION,
+            BuildArgument(
+                name="ARKD_IMAGE",
+                value=load_env_file(Path(__file__).parent / ".env").get("ARKD_IMAGE"),
+            ),
         ],
     ),
     "c-lightning-plugins": Image(
