@@ -1,4 +1,5 @@
 ARG UBUNTU_VERSION=24.04
+ARG ARKD_IMAGE=ghcr.io/arkade-os/arkd:latest
 
 FROM boltz/bitcoin-core:latest AS bitcoin-core
 FROM ghcr.io/vulpemventures/elements:latest AS elements-core
@@ -10,7 +11,7 @@ FROM boltz/foundry:latest AS anvil
 
 FROM boltz/boltz-client:latest AS boltz-client
 
-FROM ghcr.io/arkade-os/arkd:latest AS arkd
+FROM ${ARKD_IMAGE} AS arkd
 
 FROM ubuntu:${UBUNTU_VERSION}
 

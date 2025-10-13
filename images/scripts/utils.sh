@@ -45,7 +45,7 @@ lncli-sim() {
 }
 
 arkd-sim() {
-  arkd --url http://arkd:7070 "$@"
+  arkd --url http://arkd:7071 "$@"
 }
 
 # args(i)
