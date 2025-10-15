@@ -174,12 +174,17 @@ regtest-init(){
   lightning-sync
   lightning-init
 
-  # only run when arkd is available
-  if getent hosts arkd > /dev/null 2>&1; then
+  if [[ "$COMPOSE_PROFILES" == *"backend-dev"* ]] || [[ "$COMPOSE_PROFILES" == *"ark"* ]]; then
+    echo "ark profile detected, waiting for arkd..."
+    while ! timeout 1 bash -c 'cat < /dev/null > /dev/tcp/arkd/7070' 2>/dev/null; do
+      echo "waiting for arkd to be ready..."
+      sleep 1
+    done
+    echo "arkd is available"
     arkd-init
     fulmine-init
   else
-    echo "arkd not available; skipping arkd/fulmine init"
+    echo "arkd not in active profiles; skipping arkd/fulmine init"
   fi
 }
 

@@ -388,6 +388,8 @@ services:
     <<: *base-scripts
     restart: no
     container_name: boltz-regtest-start
+    environment:
+      - COMPOSE_PROFILES=${COMPOSE_PROFILES:-}
     entrypoint:
       ['/bin/bash', '-c', 'source /etc/profile.d/utils.sh && regtest-start']
     depends_on:
