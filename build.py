@@ -93,10 +93,6 @@ IMAGES: dict[str, Image] = {
             UBUNTU_VERSION,
         ],
     ),
-    "rif-relay": Image(
-        tag="latest",
-        arguments=[NODE_VERSION],
-    ),
     "scripts": Image(
         tag="latest",
         arguments=[
