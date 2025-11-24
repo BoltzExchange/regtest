@@ -122,6 +122,10 @@ elements-init(){
 
   CLIENT_ADDRESS=$(elements-cli-sim -rpcwallet=client getnewaddress)
   elements-cli-sim-server -rpcwallet=regtest sendtoaddress $CLIENT_ADDRESS 10
+
+  # First wpkh_slip77 address of "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+  elements-cli-sim-server -rpcwallet=regtest sendtoaddress el1qq2xvpcvfup5j8zscjq05u2wxxjcyewk7979f3mmz5l7uw5pqmx6xf5xy50hsn6vhkm5euwt72x878eq6zxx2z0z676mna6kdq 10
+
   elements-cli-sim-server -rpcwallet=regtest -generate 1
 }
 
