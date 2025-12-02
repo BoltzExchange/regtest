@@ -109,7 +109,7 @@ IMAGES: dict[str, Image] = {
             UBUNTU_VERSION,
             BuildArgument(
                 name="HOLD_VERSION",
-                value="v0.3.2",
+                value="v0.3.3",
             ),
             BuildArgument(
                 name="CLNURL_VERSION",
