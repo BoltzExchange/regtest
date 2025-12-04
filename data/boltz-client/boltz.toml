@@ -43,7 +43,7 @@ tlsCert = ""
 
 # Path to the TLS private key for the gRPC and REST interface
 tlsKey = ""
-noTls = true
+noTls = false
 
 # Whether the macaroon authentication for the gRPC and REST interface should be disabled
 noMacaroons = false
