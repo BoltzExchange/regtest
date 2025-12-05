@@ -108,7 +108,7 @@ services:
     restart: no
     container_name: boltz-cleanup
     entrypoint: ['/bin/bash', '-c', '/cleanup.sh']
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   postgres:
     hostname: postgres
@@ -125,7 +125,7 @@ services:
       - POSTGRES_DB=boltz
       - POSTGRES_USER=boltz
       - POSTGRES_PASSWORD=boltz
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
     ports:
       - 5432:5432
     expose:
@@ -170,7 +170,7 @@ services:
       retries: 10
       interval: 1s
       start_period: 0s
-    profiles: ['default', 'ci']
+    profiles: ['default', 'ci', 'webapp-ci']
 
   boltz-backend-nginx:
     hostname: boltz-nginx
@@ -190,7 +190,7 @@ services:
       retries: 10
       interval: 1s
       start_period: 0s
-    profiles: ['default', 'ci']
+    profiles: ['default', 'ci', 'webapp-ci']
 
   boltz-web-app:
     hostname: web-app
@@ -241,7 +241,7 @@ services:
       retries: 3
       interval: 1s
       start_period: 0s
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
 
   bitcoind:
@@ -287,7 +287,7 @@ services:
       retries: 1
       interval: 1s
       start_period: 0s
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   elementsd:
     container_name: boltz-elementsd
@@ -312,7 +312,7 @@ services:
       retries: 1
       interval: 1s
       start_period: 0s
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   cln-1:
     container_name: boltz-cln-1
@@ -324,7 +324,7 @@ services:
       - 3000:3000
     volumes:
       - cln1-data:/app/lightning
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   cln-2:
     container_name: boltz-cln-2
@@ -336,7 +336,7 @@ services:
       - 9739:9293
     volumes:
       - cln2-data:/app/lightning
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   lnd-1:
     <<: *base-lnd
@@ -347,7 +347,7 @@ services:
       - 10009:10009
     volumes:
       - lnd1-data:/app/lnd/
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   lnd-2:
     <<: *base-lnd
@@ -357,7 +357,7 @@ services:
       - 11009:10009
     volumes:
       - lnd2-data:/app/lnd/
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   bitcoind-init:
     <<: *base-scripts
@@ -367,7 +367,7 @@ services:
       ['/bin/bash', '-c', 'source /etc/profile.d/utils.sh && bitcoind-init']
     depends_on:
       - bitcoind
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   regtest-start:
     <<: *base-scripts
@@ -392,13 +392,13 @@ services:
         condition: service_healthy
       anvil:
         condition: service_healthy
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   scripts:
     <<: *base-scripts
     restart: no
     container_name: boltz-scripts
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   electrs:
     hostname: electrs-bitcoin
@@ -430,7 +430,7 @@ services:
       - 3002:3002
     volumes:
       - bitcoin-data:/root/.bitcoin
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   electrs-liquid:
     hostname: electrs-liquid
@@ -468,7 +468,7 @@ services:
       - 3003:3003
     volumes:
       - elements-data:/root/.elements
-    profiles: ['default', 'ci', 'backend-dev']
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   esplora:
     hostname: esplora
@@ -483,7 +483,7 @@ services:
     ports:
       - 4002:4002
       - 4003:4003
-    profiles: ['default', 'esplora', 'backend-dev']
+    profiles: ['default', 'esplora', 'backend-dev', 'webapp-ci']
 
   otterscan:
     hostname: otterscan
