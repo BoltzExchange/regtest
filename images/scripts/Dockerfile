@@ -15,7 +15,7 @@ FROM ${ARKD_IMAGE} AS arkd
 
 FROM ubuntu:${UBUNTU_VERSION}
 
-RUN apt-get update && apt-get install -y bash jq libevent-dev curl && \
+RUN apt-get update && apt-get install -y bash jq libevent-dev curl libsodium23 && \
     apt-get clean && rm -rf /var/lib/apt/lists/
 
 COPY --from=bitcoin-core /bin/bitcoin-cli /bin/

@@ -50,7 +50,7 @@ arkd-sim() {
 
 # args(i)
 fund_cln_node() {
-  address=$(lightning-cli-sim $1 newaddr | jq -r .bech32)
+  address=$(lightning-cli-sim $1 newaddr | jq -r .p2tr)
   echo "funding: $address on cln-node: $1"
   bitcoin-cli-sim-server -named sendtoaddress address=$address amount=30 fee_rate=1 > /dev/null
 }
