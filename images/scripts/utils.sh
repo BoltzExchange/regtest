@@ -165,12 +165,36 @@ fulmine-init(){
     -d '{"password": "ark"}' > /dev/null
 
   echo "funding fulmine"
-  fulmineAddress=$(curl -s -X GET http://fulmine:7001/api/v1/address | jq -r .address)
-  fulmineAddress=${fulmineAddress#bitcoin:}
-  fulmineAddress=${fulmineAddress%%\?*}
+  
+  while true; do
+    fulmineAddress=$(curl -s -X GET http://fulmine:7001/api/v1/address | jq -r .address)
+    if [ ! -z "$fulmineAddress" ] && [ "$fulmineAddress" != "null" ]; then
+      echo "fulmine address: $fulmineAddress"
+      fulmineAddress=${fulmineAddress#bitcoin:}
+      echo "fulmine address: $fulmineAddress"
+      fulmineAddress=${fulmineAddress%%\?*}
+      echo "fulmine address: $fulmineAddress"
+      break
+    fi
+    sleep 1
+  done
 
   bitcoin-cli-sim-server -rpcwallet=regtest sendtoaddress $fulmineAddress 1
   bitcoin-cli-sim-server -rpcwallet=regtest -generate 1
+
+  echo "waiting for fulmine transactions..."
+  while true; do
+    txCount=$(curl -s -X GET http://fulmine:7001/api/v1/transactions | jq -r '.transactions | length')
+    if [ ! -z "$txCount" ] && [ "$txCount" -gt 0 ]; then
+      echo "fulmine has $txCount transaction(s)"
+      break
+    fi
+    sleep 1
+  done
+
+  echo "settling fulmine..."
+  curl -s -X GET http://fulmine:7001/api/v1/settle
+  echo "fulmine settled"
 }
 
 regtest-init(){
