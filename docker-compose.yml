@@ -243,7 +243,6 @@ services:
       start_period: 0s
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
-
   bitcoind:
     container_name: boltz-bitcoind
     hostname: bitcoind
@@ -571,18 +570,18 @@ services:
     environment:
       - ARKD_LOG_LEVEL=6
       - ARKD_NO_MACAROONS=true
-      - ARKD_VTXO_TREE_EXPIRY=20
-      - ARKD_SCHEDULER_TYPE=block
+      - ARKD_VTXO_TREE_EXPIRY=2048
       - ARKD_UNILATERAL_EXIT_DELAY=512
-      - ARKD_BOARDING_EXIT_DELAY=1024
-      - ARKD_DATADIR=./data/regtest
+      - ARKD_PUBLIC_UNILATERAL_EXIT_DELAY=512
+      - ARKD_BOARDING_EXIT_DELAY=2048
+      - ARKD_CHECKPOINT_EXIT_DELAY=10
       - ARKD_WALLET_ADDR=arkd-wallet:6060
       - ARKD_ESPLORA_URL=http://electrs-bitcoin:3002
       - ARKD_VTXO_MIN_AMOUNT=1
       - ARKD_LIVE_STORE_TYPE=inmemory
       - ARKD_EVENT_DB_TYPE=badger
       - ARKD_DB_TYPE=sqlite
-      - ARKD_ROUND_INTERVAL=10
+      - ARKD_SESSION_DURATION=30
     volumes:
       - arkd-data:/app/data
     profiles: ['ark', 'backend-dev']
