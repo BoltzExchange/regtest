@@ -498,7 +498,7 @@ services:
         condition: service_healthy
     ports:
       - 5100:80
-    profiles: ['default', 'backend-dev']
+    profiles: ['default']
 
   nbxplorer:
     container_name: boltz-nbxplorer
