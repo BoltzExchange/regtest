@@ -26,8 +26,13 @@ function elements-cli-sim-client() {
   elements-cli $ELEMENTS_CLI_PARAMS -rpcwallet="client" "$@"
 }
 
+#backwards compat
 boltzcli-sim() {
   boltzcli --datadir=/root/.boltz-client --host boltz-client "$@"
+}
+
+boltz-client-cli-sim() {
+  boltzcli-sim "$@"
 }
 
 # args(i, cmd)
