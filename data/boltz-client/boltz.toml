@@ -14,7 +14,7 @@ url = "http://boltz-nginx:9001"
 # path = "/home/michael/test.db"
 
 [CLN]
-host = "cln-2"
+host = "cln-1"
 port = 9736
 
 rootcert = "/root/.lightning/regtest/ca.pem"

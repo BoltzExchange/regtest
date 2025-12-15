@@ -24,3 +24,19 @@ lncli-sim() {
 boltz-backend-cli-sim() {
     docker exec -it boltz-backend bash -c "cd /boltz-backend && ./bin/boltz-cli --rpc.certificates /boltz-data/certificates $(printf '%q ' "$@")"
 }
+
+lightning-cli-sim-client() {
+    run_in_container lightning-cli-sim 1 "$@"
+}
+
+lightning-cli-sim-server() {
+    run_in_container lightning-cli-sim 2 "$@"
+}
+
+lncli-sim-client() {
+    run_in_container lncli-sim 1 "$@"
+}
+
+lncli-sim-server() {
+    run_in_container lncli-sim 2 "$@"
+}
