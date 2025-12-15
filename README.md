@@ -51,78 +51,46 @@ Or alternatively, you can `source aliases.sh` to have these convenience scripts 
 
 ### Your first swap
 
-Run `./start.sh`
+Run `./start.sh` and enter the scripts container or add aliases on your host as described above.
 
-then run bash on the container
-
-```bash
-docker exec -it boltz-scripts bash
-```
-
-check the boltz client bitcoin wallet balance
+Check the client's bitcoin wallet balance:
 
 ```bash
 bitcoin-cli-sim-client getbalance
 ```
 
-#### Connecting to the network
-
-Your lightning node needs to connect to the boltz regtest network.
-
-- RPC: connect to bitcoind via rpc (`127.0.0.1:18433`, using cookie auth or rpc user:password can be extracted with `cat /root/.bitcoin/regtest/.cookie`)
-- Esplora: (`http://localhost:4002/api`)
-
-#### Top up your wallet
-
-Generate an address in your on-chain regtest wallet connected to your lightning node, and send 1 BTC e.g.
+Check the client's LND channel balance:
 
 ```bash
-bitcoin-cli-sim-client sendtoaddress bcrt1qfzjp72mft2kcx49w49l5v6vdegr7lff86j08w7 1
+lncli-sim-client channelbalance
 ```
 
-Then mine a block for the transaction to confirm:
+Generate e.g. a Bitcoin -> Lightning swap in [Web App](http://localhost:8080/) using Client's LND as destination with a 100k sats invoice:
 
 ```bash
-bitcoin-cli-sim-client -generate 1
+lncli-sim-client addinvoice --amt 100000
 ```
 
-#### Open a channel with LND-1
-
-1. Get the identity_pubkey:
+Send the required Bitcoin amount into the swap, e.g. with
 
 ```bash
-lncli-sim 1 getinfo
+bitcoin-cli-sim-client sendtoaddress bcrt1qfzjp72mft2kcx49w49l5v6vdegr7lff86j08w7 0.00104200
 ```
 
-2. Connect to the peer: *replace the below identity pubkey with the identity_pubkey from above*
-
-`023a6159c3be21ef992d89d9579c589c9f27308e61ae1dcb609170c13af09c0504@127.0.0.1:29735`
-
-3. Open a channel (e.g. 500k sats)
-
-4. Mine some blocks for the open channel transaction to confirm:
+Mine three blocks for the swap to process and watch web app progress to the swap success screen:
 
 ```bash
-bitcoin-cli-sim-client -generate 6
+bitcoin-cli-sim-client -generate 3
 ```
 
-#### Swapping out
+Check the client's bitcoin wallet balance again:
 
-Now that you have opened a channel and all the funds are on your side, you can swap out.
+```bash
+bitcoin-cli-sim-client getbalance
+```
 
-1. Visit the [Boltz Web App](http://localhost:8080) to initiate a swap
-2. Toggle to swap Lightning -> Bitcoin
-3. Provide an on-chain address from your on-chain regtest wallet connected to your lightning node
-4. Use your lightning node to pay the lightning invoice provided by Boltz.
-5. Make sure to mine a block for the swap to complete.
+Check the client's LND channel balance again:
 
-### Swapping in
-
-After swapping out and you have some receiving capacity you can try swapping in to your channel.
-
-1. Visit the [Boltz Web App](http://localhost:8080) to initiate a swap
-2. Toggle to swap Bitcoin -> Lightning
-3. Create an invoice from your lightning node
-4. Paste it into the form
-5. Pay the amount specified to the on-chain address.
-6. Make sure to mine a block for the swap to complete.
+```bash
+lncli-sim-client channelbalance
+```
