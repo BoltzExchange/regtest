@@ -32,12 +32,13 @@ docker exec -it boltz-scripts bash
 - bitcoin-cli-sim-server
 - elements-cli-sim-client
 - elements-cli-sim-server
+- lightning-cli-sim-client
+- lightning-cli-sim-server
+- lncli-sim-client
+- lncli-sim-server
 - boltz-client-cli-sim
 - boltz-backend-cli-sim
-- lightning-cli-sim
-- lncli-sim
 
-Since there are two lnd and two cln instances, use `lncli-sim 1` or `lightning-cli-sim 1` to interact with the first instance and `lncli-sim 2` or `lightning-cli-sim 2` to interact with the second.
 
 Or alternatively, you can `source aliases.sh` to have these convenience scripts available on the host machine.
 

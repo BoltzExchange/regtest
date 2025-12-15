@@ -49,6 +49,23 @@ lncli-sim() {
   lncli --network regtest --rpcserver=lnd-$i:10009 --lnddir=/root/.lnd-"$i" "$@"
 }
 
+# client/backend convenience wrappers
+lightning-cli-sim-client() {
+  lightning-cli-sim 1 "$@"
+}
+
+lightning-cli-sim-server() {
+  lightning-cli-sim 2 "$@"
+}
+
+lncli-sim-client() {
+  lncli-sim 1 "$@"
+}
+
+lncli-sim-server() {
+  lncli-sim 2 "$@"
+}
+
 arkd-sim() {
   arkd --url http://arkd:7071 "$@"
 }

@@ -222,7 +222,7 @@ services:
       retries: 10
       start_period: 0s
     volumes:
-      - cln2-data:/root/.lightning
+      - cln1-data:/root/.lightning
       - elements-data:/root/.elements
       - boltz-client-data:/root/.boltz
     profiles: ['default']
