@@ -344,6 +344,7 @@ services:
     ports:
       - 8081:8081
       - 10009:10009
+      - 29735:9735
     volumes:
       - lnd1-data:/app/lnd/
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
