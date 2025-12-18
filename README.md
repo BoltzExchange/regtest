@@ -96,3 +96,11 @@ Check the client's LND channel balance again:
 ```bash
 lncli-sim-client channelbalance
 ```
+
+### Updating images
+
+```bash
+./stop.sh
+docker compose pull
+./start.sh
+```
