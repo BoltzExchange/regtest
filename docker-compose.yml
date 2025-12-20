@@ -131,12 +131,14 @@ services:
     expose:
       - 5432
 
-  dragonfly:
-    hostname: dragonfly
-    container_name: boltz-dragonfly
+  redis:
+    hostname: redis
+    container_name: boltz-redis
     restart: always
-    image: ${DRAGONFLY_IMAGE}
-    command: ['--cache_mode', '--maxmemory', '8g']
+    image: ${REDIS_IMAGE}
+    volumes:
+      - ./redis/cache.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
     ports:
       - 6379:6379
     ulimits:
