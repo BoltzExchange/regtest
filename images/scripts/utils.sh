@@ -174,6 +174,10 @@ arkd-init(){
   bitcoin-cli-sim-server -rpcwallet=regtest sendtoaddress $(arkd-sim wallet address) 25
   bitcoin-cli-sim-server -rpcwallet=regtest -generate 1
   echo "funded arkd"
+
+  while ! curl -sf http://arkd:7070/v1/info > /dev/null 2>&1; do
+    sleep 1
+  done
 }
 
 fulmine-init(){
