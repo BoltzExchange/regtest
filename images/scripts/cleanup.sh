@@ -27,6 +27,7 @@ WIPE_DIRS=(
     ".lightning-2"
     ".lnd-1"
     ".lnd-2"
+    ".lnd-3"
     ".boltz-backend"
     ".boltz-client"
     ".arkd"

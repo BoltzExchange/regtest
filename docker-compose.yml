@@ -8,6 +8,7 @@ x-services:
       - cln2-data:/root/.lightning-2
       - lnd1-data:/root/.lnd-1
       - lnd2-data:/root/.lnd-2
+      - lnd3-data:/root/.lnd-3
       - boltz-client-data:/root/.boltz-client
       - boltz-data:/root/.boltz-backend
       - arkd-data:/root/.arkd
@@ -160,7 +161,8 @@ services:
       ['--datadir', '/boltz-data', '--configpath', '/boltz-data/boltz.conf']
     volumes:
       - boltz-data:/boltz-data
-      - lnd2-data:/data/lnd
+      - lnd2-data:/data/lnd-2
+      - lnd3-data:/data/lnd-3
       - cln2-data:/data/lightning
       - elements-data:/data/elements
       - bitcoin-data:/data/bitcoin
@@ -361,6 +363,16 @@ services:
       - lnd2-data:/app/lnd/
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
+  lnd-3:
+    <<: *base-lnd
+    container_name: boltz-lnd-3
+    hostname: lnd-3
+    ports:
+      - 12009:10009
+    volumes:
+      - lnd3-data:/app/lnd/
+    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
+
   bitcoind-init:
     <<: *base-scripts
     restart: no
@@ -387,6 +399,8 @@ services:
       lnd-1:
         condition: service_healthy
       lnd-2:
+        condition: service_healthy
+      lnd-3:
         condition: service_healthy
       cln-1:
         condition: service_healthy
@@ -678,6 +692,13 @@ volumes:
       type: none
       o: bind
       device: ./data/lnd2
+  lnd3-data:
+    name: boltz-lnd3-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/lnd3
   nginx-data:
     name: boltz-nginx-data
     driver: local
