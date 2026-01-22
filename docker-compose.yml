@@ -255,6 +255,7 @@ services:
       - -regtest
       - -datadir=/app/bitcoin
       - -fallbackfee=0.00000253
+      - -mintxfee=0.000001
       - -zmqpubrawtx=tcp://0.0.0.0:29000
       - -zmqpubrawblock=tcp://0.0.0.0:29001
       - -txindex
