@@ -8,6 +8,8 @@ data/lnd1/*
 !data/lnd1/.gitkeep
 data/lnd2/*
 !data/lnd2/.gitkeep
+data/lnd3/*
+!data/lnd3/.gitkeep
 data/backend/*
 !data/backend/boltz.conf
 !data/backend/seed.dat

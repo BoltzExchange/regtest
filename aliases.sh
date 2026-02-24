@@ -10,7 +10,6 @@ alias elements-cli-sim-client='run_in_container elements-cli-sim-client'
 alias elements-cli-sim-server='run_in_container elements-cli-sim-server'
 alias boltz-client-cli-sim='run_in_container boltzcli-sim'
 alias boltzcli-sim='run_in_container boltzcli-sim' #backwards compat
-alias boltz-backend-cli-sim='boltz-backend-cli-sim'
 alias mine-block='bitcoin-cli-sim-client -generate 1 && elements-cli-sim-client -generate 1'
 
 lightning-cli-sim() {
