@@ -247,6 +247,7 @@ lightning-sync(){
   wait-for-cln-sync 2
   wait-for-lnd-sync 1
   wait-for-lnd-sync 2
+  wait-for-lnd-sync 3
 }
 
 lightning-init(){
@@ -256,6 +257,7 @@ lightning-init(){
     fund_cln_node 2
     fund_lnd_node 1
     fund_lnd_node 2
+    fund_lnd_node 3
   done
 
   echo "mining 3 blocks..."
@@ -313,6 +315,23 @@ lightning-init(){
   # cln-1 -> cln-2 P2P connection for offer fetching
   lightning-cli-sim 1 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2:9735
 
+  lightning-sync
+
+  # lnd-3 -> lnd-1 (for routing through client network)
+  lncli-sim 3 connect $(lncli-sim 1 getinfo | jq -r '.identity_pubkey')@lnd-1 > /dev/null
+  echo "open channel from lnd-3 to lnd-1"
+  lncli-sim 3 openchannel $(lncli-sim 1 getinfo | jq -r '.identity_pubkey') $channel_size $balance_size > /dev/null
+  bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
+  wait-for-lnd-channel 3
+  lightning-sync
+
+  # lnd-3 -> cln-2 (direct to server CLN)
+  lncli-sim 3 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2 > /dev/null
+  echo "open channel from lnd-3 to cln-2"
+  lncli-sim 3 openchannel $(lightning-cli-sim 2 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
+  bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
+  wait-for-lnd-channel 3
+  wait-for-cln-channel 2
   lightning-sync
 
 }
