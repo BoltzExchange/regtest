@@ -325,7 +325,16 @@ lightning-init(){
   wait-for-lnd-channel 3
   lightning-sync
 
-  # lnd-3 -> cln-2 (direct to server CLN)
+  # lnd-3 -> cln-1
+  lncli-sim 3 connect $(lightning-cli-sim 1 getinfo | jq -r '.id')@cln-1 > /dev/null
+  echo "open channel from lnd-3 to cln-1"
+  lncli-sim 3 openchannel $(lightning-cli-sim 1 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
+  bitcoin-cli-sim-server -generate $channel_confirms > /dev/null
+  wait-for-lnd-channel 3
+  wait-for-cln-channel 1
+  lightning-sync
+
+  # lnd-3 -> cln-2
   lncli-sim 3 connect $(lightning-cli-sim 2 getinfo | jq -r '.id')@cln-2 > /dev/null
   echo "open channel from lnd-3 to cln-2"
   lncli-sim 3 openchannel $(lightning-cli-sim 2 getinfo | jq -r '.id') $channel_size $balance_size > /dev/null
