@@ -547,16 +547,20 @@ services:
         condition: service_healthy
     healthcheck:
       test:
-        [
-          'CMD',
-          'bash',
-          '-c',
-          "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/32838'",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+        - CMD
+        - bash
+        - -lc
+        - |
+          exec 3<>/dev/tcp/127.0.0.1/32838 || exit 1
+          printf 'GET /v1/cryptos/BTC/status HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n' >&3
+          response="$$(cat <&3)" || exit 1
+          grep -q 'HTTP/1.1 200' <<<"$$response" &&
+          grep -q '"isFullySynched":true' <<<"$$response" &&
+          grep -q '"capabilities"' <<<"$$response"
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 10s
     volumes:
       - bitcoin-data:/app/bitcoin
     profiles: ['btcpay', 'ark', 'backend-dev']
