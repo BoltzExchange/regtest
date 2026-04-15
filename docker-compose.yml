@@ -629,7 +629,6 @@ services:
       - '7000:7000'
       - '7001:7001'
     environment:
-      - FULMINE_NO_MACAROONS=true
       - FULMINE_HTTP_PORT=7001
       - FULMINE_ARK_SERVER=http://arkd:7070
       - FULMINE_ESPLORA_URL=http://electrs-bitcoin:3002
