@@ -2,17 +2,17 @@ x-services:
   base-scripts: &base-scripts
     image: ${SCRIPTS_IMAGE}
     volumes:
-      - bitcoin-data:/root/.bitcoin
-      - elements-data:/root/.elements
-      - cln1-data:/root/.lightning-1
-      - cln2-data:/root/.lightning-2
-      - lnd1-data:/root/.lnd-1
-      - lnd2-data:/root/.lnd-2
-      - lnd3-data:/root/.lnd-3
-      - boltz-client-data:/root/.boltz-client
-      - boltz-data:/root/.boltz-backend
-      - arkd-data:/root/.arkd
-      - fulmine-data:/root/.fulmine
+      - bitcoin-data:/root/.bitcoin:z
+      - elements-data:/root/.elements:z
+      - cln1-data:/root/.lightning-1:z
+      - cln2-data:/root/.lightning-2:z
+      - lnd1-data:/root/.lnd-1:z
+      - lnd2-data:/root/.lnd-2:z
+      - lnd3-data:/root/.lnd-3:z
+      - boltz-client-data:/root/.boltz-client:z
+      - boltz-data:/root/.boltz-backend:z
+      - arkd-data:/root/.arkd:z
+      - fulmine-data:/root/.fulmine:z
 
   base-lnd: &base-lnd
     image: ${LND_IMAGE}
@@ -50,8 +50,8 @@ x-services:
         ]
       interval: 1s
       timeout: 1s
-      retries: 30
-      start_period: 0s
+      retries: 60
+      start_period: 10s
 
   base-cln: &base-cln
     image: ${CLN_IMAGE}
@@ -99,9 +99,9 @@ x-services:
           'getinfo',
         ]
       timeout: 1s
-      retries: 20
+      retries: 60
       interval: 1s
-      start_period: 0s
+      start_period: 10s
 
 services:
   cleanup:
@@ -138,7 +138,7 @@ services:
     restart: always
     image: ${REDIS_IMAGE}
     volumes:
-      - ./redis/cache.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./redis/cache.conf:/usr/local/etc/redis/redis.conf:ro,z
     command: redis-server /usr/local/etc/redis/redis.conf
     ports:
       - 6379:6379
@@ -160,12 +160,12 @@ services:
     command:
       ['--datadir', '/boltz-data', '--configpath', '/boltz-data/boltz.conf']
     volumes:
-      - boltz-data:/boltz-data
-      - lnd2-data:/data/lnd-2
-      - lnd3-data:/data/lnd-3
-      - cln2-data:/data/lightning
-      - elements-data:/data/elements
-      - bitcoin-data:/data/bitcoin
+      - boltz-data:/boltz-data:z
+      - lnd2-data:/data/lnd-2:z
+      - lnd3-data:/data/lnd-3:z
+      - cln2-data:/data/lightning:z
+      - elements-data:/data/elements:z
+      - bitcoin-data:/data/bitcoin:z
     ports:
       - 9000:9000
     healthcheck:
@@ -187,7 +187,7 @@ services:
     ports:
       - 9001:9001
     volumes:
-      - nginx-data:/etc/nginx/conf.d
+      - nginx-data:/etc/nginx/conf.d:z
     healthcheck:
       test: ['CMD-SHELL', 'curl http://localhost:9001/version']
       timeout: 1s
@@ -226,9 +226,9 @@ services:
       retries: 10
       start_period: 0s
     volumes:
-      - cln1-data:/root/.lightning
-      - elements-data:/root/.elements
-      - boltz-client-data:/root/.boltz
+      - cln1-data:/root/.lightning:z
+      - elements-data:/root/.elements:z
+      - boltz-client-data:/root/.boltz:z
     profiles: ['default']
 
   anvil:
@@ -277,7 +277,7 @@ services:
       - 29000:29000
       - 29001:29001
     volumes:
-      - bitcoin-data:/app/bitcoin
+      - bitcoin-data:/app/bitcoin:z
     healthcheck:
       test:
         [
@@ -309,7 +309,7 @@ services:
       - 31002:31002
       - 18884:18884
     volumes:
-      - elements-data:/root/.elements
+      - elements-data:/root/.elements:z
     healthcheck:
       test: ['CMD', 'elements-cli', '-getinfo']
       timeout: 1s
@@ -327,7 +327,7 @@ services:
       - 9292:9292
       - 3000:3000
     volumes:
-      - cln1-data:/app/lightning
+      - cln1-data:/app/lightning:z
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   cln-2:
@@ -339,7 +339,7 @@ services:
       - 9738:9292
       - 9739:9293
     volumes:
-      - cln2-data:/app/lightning
+      - cln2-data:/app/lightning:z
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   lnd-1:
@@ -351,7 +351,7 @@ services:
       - 10009:10009
       - 29735:9735
     volumes:
-      - lnd1-data:/app/lnd/
+      - lnd1-data:/app/lnd/:z
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   lnd-2:
@@ -361,7 +361,7 @@ services:
     ports:
       - 11009:10009
     volumes:
-      - lnd2-data:/app/lnd/
+      - lnd2-data:/app/lnd/:z
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   lnd-3:
@@ -371,7 +371,7 @@ services:
     ports:
       - 12009:10009
     volumes:
-      - lnd3-data:/app/lnd/
+      - lnd3-data:/app/lnd/:z
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   bitcoind-init:
@@ -446,7 +446,7 @@ services:
       - 19001:19001
       - 3002:3002
     volumes:
-      - bitcoin-data:/root/.bitcoin
+      - bitcoin-data:/root/.bitcoin:z
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   electrs-liquid:
@@ -477,14 +477,14 @@ services:
     healthcheck:
       test: ['CMD-SHELL', 'curl -s $(hostname):3003/blocks/tip/height']
       timeout: 15s
-      retries: 20
+      retries: 60
       interval: 2s
-      start_period: 5s
+      start_period: 15s
     ports:
       - 19002:19002
       - 3003:3003
     volumes:
-      - elements-data:/root/.elements
+      - elements-data:/root/.elements:z
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   esplora:
@@ -562,7 +562,7 @@ services:
       retries: 30
       start_period: 10s
     volumes:
-      - bitcoin-data:/app/bitcoin
+      - bitcoin-data:/app/bitcoin:z
     profiles: ['btcpay', 'ark', 'backend-dev']
 
   arkd-wallet:
@@ -615,7 +615,7 @@ services:
       - ARKD_DB_TYPE=sqlite
       - ARKD_SESSION_DURATION=30
     volumes:
-      - arkd-data:/app/data
+      - arkd-data:/app/data:z
     profiles: ['ark', 'backend-dev']
 
   fulmine:
@@ -636,7 +636,7 @@ services:
       - FULMINE_UNLOCKER_PASSWORD=ark
       - FULMINE_DISABLE_TELEMETRY=true
     volumes:
-      - fulmine-data:/app/data
+      - fulmine-data:/app/data:z
     profiles: ['ark', 'backend-dev']
 
   backend-dev-ready:
