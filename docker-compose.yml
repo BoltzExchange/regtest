@@ -25,7 +25,7 @@ x-services:
       - --listen=0.0.0.0:9735
       - --rpclisten=0.0.0.0:10009
       - --restlisten=0.0.0.0:8081
-      - --bitcoin.timelockdelta=18
+      - --bitcoin.timelockdelta=24
       - --bitcoin.active
       - --bitcoin.regtest
       - --bitcoin.node=bitcoind
@@ -35,6 +35,10 @@ x-services:
       - --bitcoind.rpccookie=/app/bitcoin/regtest/.cookie
       - --noseedbackup
       - --protocol.wumbo-channels
+      # LND v0.21.0 advertises option_onion_messages but refuses to forward
+      # messages back to the sending peer ("onion message cycle"), which
+      # breaks CLN BOLT12 blinded paths that use an LND node as intro node
+      - --protocol.no-onion-messages
       - --lnddir=/app/lnd
     expose:
       - 8081
