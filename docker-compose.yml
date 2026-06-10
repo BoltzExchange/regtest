@@ -107,6 +107,31 @@ x-services:
       interval: 1s
       start_period: 10s
 
+  base-anvil: &base-anvil
+    image: ${FOUNDRY_IMAGE}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        rpc_url="$${FORK_RPC_URL:-}"
+        if [ -z "$$rpc_url" ]; then
+          exec anvil --host 0.0.0.0 --chain-id "$$CHAIN_ID" $$EXTRA_ANVIL_ARGS
+        fi
+        exec anvil \
+          --host 0.0.0.0 \
+          --chain-id "$$CHAIN_ID" \
+          $$EXTRA_ANVIL_ARGS \
+          --no-rate-limit \
+          --fork-url "$$rpc_url" \
+          --fork-block-number "$$FORK_BLOCK_NUMBER"
+    healthcheck:
+      test: ['CMD-SHELL', "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/8545'"]
+      timeout: 1s
+      retries: 10
+      interval: 1s
+      start_period: 0s
+    profiles: ['stables-e2e']
+
 services:
   cleanup:
     <<: *base-scripts
@@ -155,16 +180,33 @@ services:
     container_name: boltz-backend
     user: '${UID:-1000}:${GID:-1000}'
     depends_on:
+      anvil-arb:
+        condition: service_healthy
+        required: false
+      anvil-eth:
+        condition: service_healthy
+        required: false
       regtest-start:
         condition: service_completed_successfully
       postgres:
         condition: service_healthy
     restart: always
     image: ${BOLTZ_BACKEND_IMAGE}
-    command:
-      ['--datadir', '/boltz-data', '--configpath', '/boltz-data/boltz.conf']
+    environment:
+      ARBITRUM_E2E_RPC_URL: ${ARBITRUM_E2E_RPC_URL:-}
+      ETHEREUM_E2E_RPC_URL: ${ETHEREUM_E2E_RPC_URL:-}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        config_path=/boltz-data/boltz.conf
+        if [ -n "$${ARBITRUM_E2E_RPC_URL:-}" ] && [ -n "$${ETHEREUM_E2E_RPC_URL:-}" ]; then
+          config_path=/boltz-data/boltz.arbitrum-e2e.conf
+        fi
+        exec node /boltz-backend/bin/boltzd --datadir /boltz-data --configpath "$$config_path"
     volumes:
       - boltz-data:/boltz-data
+      - ./data/backend-arbitrum-e2e/boltz.conf:/boltz-data/boltz.arbitrum-e2e.conf:ro
       - lnd2-data:/data/lnd-2
       - lnd3-data:/data/lnd-3
       - cln2-data:/data/lightning
@@ -250,6 +292,40 @@ services:
       interval: 1s
       start_period: 0s
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
+
+  anvil-arb:
+    <<: *base-anvil
+    hostname: anvil-arb
+    container_name: anvil-arb
+    environment:
+      FORK_RPC_URL: ${ARBITRUM_E2E_RPC_URL:-}
+      FORK_BLOCK_NUMBER: ${ARBITRUM_E2E_BLOCK_NUMBER}
+      CHAIN_ID: 42161
+      EXTRA_ANVIL_ARGS: "--gas-limit 30000000"
+    ports:
+      - ${ARBITRUM_E2E_PORT:-18545}:8545
+
+  gas-sponsor-emulator:
+    hostname: gas-sponsor-emulator
+    container_name: boltz-gas-sponsor-emulator
+    image: ${GAS_SPONSOR_EMULATOR_IMAGE}
+    build:
+      context: ./images/gas-sponsor-emulator
+    environment:
+      ARBITRUM_RPC_URL: http://anvil-arb:8545
+      GAS_SPONSOR_EMULATOR_PORT: 18547
+    depends_on:
+      anvil-arb:
+        condition: service_healthy
+    ports:
+      - ${GAS_SPONSOR_EMULATOR_PORT:-18547}:18547
+    healthcheck:
+      test: ['CMD-SHELL', "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/18547'"]
+      timeout: 1s
+      retries: 10
+      interval: 1s
+      start_period: 0s
+    profiles: ['stables-e2e']
 
   bitcoind:
     container_name: boltz-bitcoind

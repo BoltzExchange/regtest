@@ -103,6 +103,10 @@ IMAGES: dict[str, Image] = {
             ),
         ],
     ),
+    "gas-sponsor-emulator": Image(
+        tag="latest",
+        arguments=[],
+    ),
     "c-lightning-plugins": Image(
         tag=CLN_VERSION,
         arguments=[
