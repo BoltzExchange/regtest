@@ -3,6 +3,7 @@
 An environment for local development and testing, successor of [legend-regtest-enviroment](https://github.com/BoltzExchange/legend-regtest-enviroment).
 
 ## Prerequisites
+
 [Docker](https://docs.docker.com/engine/install/) or [Orbstack](https://orbstack.dev/) for Apple Silicon based Macs.
 When using OrbStack on macOS, set `export DOCKER_DEFAULT_PLATFORM=linux/amd64` before starting.
 
@@ -18,7 +19,6 @@ When using OrbStack on macOS, set `export DOCKER_DEFAULT_PLATFORM=linux/amd64` b
 
 - Web App: [http://localhost:8080](http://localhost:8080)
 - API: [http://localhost:9001](http://localhost:9001)
-
 
 Data dirs for the services are stored in `./data` folder.
 
@@ -38,7 +38,6 @@ docker exec -it boltz-scripts bash
 - lncli-sim-server
 - boltz-client-cli-sim
 - boltz-backend-cli-sim
-
 
 Or alternatively, you can `source aliases.sh` to have these convenience scripts available on the host machine.
 
