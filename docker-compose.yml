@@ -185,9 +185,6 @@ services:
       anvil-eth:
         condition: service_healthy
         required: false
-      stables-e2e-wallet:
-        condition: service_completed_successfully
-        required: false
       regtest-start:
         condition: service_completed_successfully
       postgres:
@@ -295,22 +292,6 @@ services:
     ports:
       - ${ETHEREUM_E2E_PORT:-18546}:8545
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
-
-  stables-e2e-wallet:
-    hostname: stables-e2e-wallet
-    container_name: stables-e2e-wallet
-    image: ${SCRIPTS_IMAGE}
-    depends_on:
-      anvil-eth:
-        condition: service_healthy
-    environment:
-      STABLES_E2E_ACCOUNT_INDEX: ${STABLES_E2E_ACCOUNT_INDEX:-1}
-      STABLES_E2E_USDT0_ETH_AMOUNT: ${STABLES_E2E_USDT0_ETH_AMOUNT:-500000000}
-      STABLES_E2E_USDT0_ETH_TOKEN: ${STABLES_E2E_USDT0_ETH_TOKEN:-0xdAC17F958D2ee523a2206206994597C13D831ec7}
-      STABLES_E2E_USDT0_ETH_FUNDING_SOURCE: ${STABLES_E2E_USDT0_ETH_FUNDING_SOURCE:-0xF977814e90dA44bFA03b6295A0616a897441aceC}
-    command:
-      ['/bin/bash', '-c', 'source /etc/profile.d/utils.sh && fund-stables-e2e-wallet']
-    profiles: ['stables-e2e']
 
   anvil-arb:
     <<: *base-anvil
