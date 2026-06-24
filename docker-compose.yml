@@ -309,9 +309,7 @@ services:
   gas-sponsor-emulator:
     hostname: gas-sponsor-emulator
     container_name: boltz-gas-sponsor-emulator
-    image: gas-sponsor-emulator
-    build:
-      context: ./images/gas-sponsor-emulator
+    image: ${GAS_SPONSOR_EMULATOR_IMAGE}
     environment:
       ARBITRUM_RPC_URL: http://anvil-arb:8545
       GAS_SPONSOR_EMULATOR_PORT: 18547
