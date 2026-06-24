@@ -226,7 +226,7 @@ def handle_alchemy(body):
         if error is not None:
             raise RuntimeError(error)
         return (
-            {"status": 200}
+            {"status": 100}
             if stored_receipts is None
             else {"status": 200, "receipts": stored_receipts}
         )
