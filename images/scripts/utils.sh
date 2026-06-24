@@ -409,59 +409,6 @@ wait-for-cln-sync(){
   done
 }
 
-# Funds an Anvil account with USDT0-ETH on the Ethereum e2e fork by
-# impersonating a whale funding source and transferring tokens from it.
-fund-stables-e2e-wallet() {
-  set -euo pipefail
-
-  local rpc_url="http://anvil-eth:8545"
-  local account_index="${STABLES_E2E_ACCOUNT_INDEX:-1}"
-  local amount="${STABLES_E2E_USDT0_ETH_AMOUNT:-500000000}"
-  local token="${STABLES_E2E_USDT0_ETH_TOKEN:-0xdAC17F958D2ee523a2206206994597C13D831ec7}"
-  local funding_source="${STABLES_E2E_USDT0_ETH_FUNDING_SOURCE:-0xF977814e90dA44bFA03b6295A0616a897441aceC}"
-
-  rpc() { cast rpc --rpc-url "$rpc_url" "$@"; }
-
-  if ! [[ "$account_index" =~ ^[0-9]+$ ]]; then
-    echo "STABLES_E2E_ACCOUNT_INDEX must be a non-negative integer" >&2
-    return 1
-  fi
-
-  local wallet_address
-  wallet_address="$(rpc eth_accounts | jq -r --argjson index "$account_index" '.[$index] // empty')"
-  if [ -z "$wallet_address" ]; then
-    echo "missing Anvil account at STABLES_E2E_ACCOUNT_INDEX=$account_index" >&2
-    return 1
-  fi
-
-  if [ "$(cast code --rpc-url "$rpc_url" "$token")" = "0x" ]; then
-    echo "missing USDT0-ETH token contract on Ethereum e2e fork" >&2
-    return 1
-  fi
-
-  rpc anvil_setBalance "$wallet_address" 0x8ac7230489e80000 # 10 ETH for gas
-  rpc anvil_setBalance "$funding_source" 0xde0b6b3a7640000  # 1 ETH for gas
-  rpc anvil_impersonateAccount "$funding_source"
-  trap 'rpc anvil_stopImpersonatingAccount "$funding_source" >/dev/null || true' RETURN
-
-  cast send \
-    --rpc-url "$rpc_url" \
-    --unlocked \
-    --from "$funding_source" \
-    "$token" \
-    "transfer(address,uint256)" \
-    "$wallet_address" \
-    "$amount"
-
-  # cast call annotates the result as "<value> (uint256)"; keep only the value.
-  local wallet_balance
-  wallet_balance="$(cast call --rpc-url "$rpc_url" "$token" "balanceOf(address)(uint256)" "$wallet_address" | awk '{print $1}')"
-  if [ "$wallet_balance" -lt "$amount" ]; then
-    echo "failed to fund stables e2e wallet" >&2
-    return 1
-  fi
-}
-
 # Deploy contracts
 deploy_contract() {
   cast send --rpc-url "${DEPLOY_CONTRACT_RPC_URL:-http://anvil:8545}" --private-key 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d --create $1
