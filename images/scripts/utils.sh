@@ -127,8 +127,13 @@ restart_offer_plugin() {
 
 regtest-start(){
   deploy_contracts
-  DEPLOY_CONTRACT_RPC_URL=http://anvil-arb:8545 deploy_contracts
-  DEPLOY_CONTRACT_RPC_URL=http://anvil-arb:8545 deploy_mock_tbtc
+
+  # The Arbitrum stack is opt-in (see images/boltz-backend/entrypoint.sh).
+  # Only deploy the Arbitrum contracts when the anvil-arb node is running.
+  if getent hosts anvil-arb > /dev/null 2>&1; then
+    DEPLOY_CONTRACT_RPC_URL=http://anvil-arb:8545 deploy_contracts
+    DEPLOY_CONTRACT_RPC_URL=http://anvil-arb:8545 deploy_mock_tbtc
+  fi
 
   restart_offer_plugin 1
   restart_offer_plugin 2
