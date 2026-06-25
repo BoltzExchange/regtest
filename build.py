@@ -93,6 +93,10 @@ IMAGES: dict[str, Image] = {
             UBUNTU_VERSION,
         ],
     ),
+    "gas-sponsor-emulator": Image(
+        tag="latest",
+        arguments=[],
+    ),
     "scripts": Image(
         tag="latest",
         arguments=[
