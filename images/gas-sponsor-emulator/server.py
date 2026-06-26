@@ -23,6 +23,15 @@ prepared_calls = {}
 receipts = {}
 execution_errors = {}
 _state_lock = threading.Lock()
+_relayer_lock = threading.Lock()
+
+# Anvil dev account #9: a well-known, unlocked key Anvil signs for. Sender-agnostic
+# sponsored calls are relayed from it so the mined tx has a real signature (the
+# impersonation path leaves r=0,s=0, which the backend's tx parser rejects).
+RELAYER_ADDRESS = os.environ.get(
+    "GAS_SPONSOR_EMULATOR_RELAYER_ADDRESS",
+    "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720",
+)
 
 
 def rpc(method: str, params=None):
@@ -92,29 +101,70 @@ def hex_quantity(value) -> str:
     return hex(int(str(value or "0"), 0))
 
 
-def send_prepared_call(sender: str, call) -> str:
+def compute_lockup_selector() -> str:
+    # executeAndLockERC20WithPermit2 is sender-agnostic: Permit2 pulls the user's
+    # tokens via the owner + signature embedded in the calldata, so any funded
+    # signer can submit it. Derive the selector with cast (already used here) and
+    # fall back to the known value if cast is unavailable.
+    signature = (
+        "executeAndLockERC20WithPermit2(bytes32,address,address,address,uint256,"
+        "(address,uint256,bytes)[],((address,uint256),uint256,uint256),address,bytes)"
+    )
+    try:
+        selector = (
+            subprocess.check_output(["cast", "sig", signature], text=True)
+            .strip()
+            .lower()
+        )
+        if selector.startswith("0x") and len(selector) == 10:
+            return selector
+    except Exception as error:
+        print(f"cast sig failed, using fallback selector: {error}", flush=True)
+    return "0xa66bd06e"
+
+
+PERMIT2_LOCKUP_SELECTOR = compute_lockup_selector()
+
+
+def transaction_params(sender: str, call) -> dict:
+    return {
+        "from": sender,
+        "to": call["to"],
+        "value": hex_quantity(call.get("value")),
+        "data": call.get("data", "0x"),
+        "gas": hex(SPONSORED_CALL_GAS_LIMIT),
+        "maxFeePerGas": hex(PREPARED_CALL_MAX_FEE_PER_GAS),
+        "maxPriorityFeePerGas": hex(PREPARED_CALL_MAX_PRIORITY_FEE_PER_GAS),
+    }
+
+
+def is_sender_agnostic(call) -> bool:
+    return (call.get("data") or "0x").lower()[:10] == PERMIT2_LOCKUP_SELECTOR
+
+
+def send_from_relayer(call) -> str:
+    with _relayer_lock:
+        rpc("anvil_setBalance", [RELAYER_ADDRESS, hex(100 * 10**18)])
+        rpc("anvil_setCode", [RELAYER_ADDRESS, "0x"])
+        return rpc("eth_sendTransaction", [transaction_params(RELAYER_ADDRESS, call)])
+
+
+def send_impersonated(sender: str, call) -> str:
     rpc("anvil_setBalance", [sender, hex(100 * 10**18)])
     rpc("anvil_impersonateAccount", [sender])
-
     try:
-        return rpc(
-            "eth_sendTransaction",
-            [
-                {
-                    "from": sender,
-                    "to": call["to"],
-                    "value": hex_quantity(call.get("value")),
-                    "data": call.get("data", "0x"),
-                    "gas": hex(SPONSORED_CALL_GAS_LIMIT),
-                    "maxFeePerGas": hex(PREPARED_CALL_MAX_FEE_PER_GAS),
-                    "maxPriorityFeePerGas": hex(
-                        PREPARED_CALL_MAX_PRIORITY_FEE_PER_GAS
-                    ),
-                }
-            ],
-        )
+        return rpc("eth_sendTransaction", [transaction_params(sender, call)])
     finally:
         rpc("anvil_stopImpersonatingAccount", [sender])
+
+
+def send_prepared_call(sender: str, call) -> str:
+    # The sender-agnostic Permit2 lockup is relayed from a real signer so the tx
+    # is validly signed; other calls (e.g. the commitment lockup that moves the
+    # signer's own balance) still need the signer's context, so impersonate.
+    if is_sender_agnostic(call):
+        return send_from_relayer(call)
+    return send_impersonated(sender, call)
 
 
 def execute_prepared_calls(call_id: str):

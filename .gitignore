@@ -25,3 +25,5 @@ data/arkd/*
 !data/arkd/.gitkeep
 data/fulmine/*
 !data/fulmine/.gitkeep
+__pycache__/
+*.pyc
