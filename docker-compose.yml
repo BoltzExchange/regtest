@@ -297,7 +297,7 @@ services:
       CHAIN_ID: 1
     ports:
       - ${ETHEREUM_E2E_PORT:-18546}:8545
-    profiles: ['ci', 'backend-dev', 'webapp-ci']
+    profiles: ['ci', 'webapp-ci']
 
   anvil-arb:
     <<: *base-anvil
@@ -310,7 +310,7 @@ services:
       EXTRA_ANVIL_ARGS: '--gas-limit 30000000'
     ports:
       - ${ARBITRUM_E2E_PORT:-18545}:8545
-    profiles: ['ci', 'backend-dev', 'webapp-ci']
+    profiles: ['ci', 'webapp-ci']
 
   gas-sponsor-emulator:
     hostname: gas-sponsor-emulator
@@ -330,7 +330,7 @@ services:
       retries: 10
       interval: 1s
       start_period: 0s
-    profiles: ['ci', 'backend-dev', 'webapp-ci']
+    profiles: ['ci', 'webapp-ci']
 
   bitcoind:
     container_name: boltz-bitcoind
