@@ -183,9 +183,6 @@ services:
       anvil-arb:
         condition: service_healthy
         required: false
-      anvil-eth:
-        condition: service_healthy
-        required: false
       regtest-start:
         condition: service_completed_successfully
       postgres:
@@ -210,8 +207,8 @@ services:
       retries: 10
       interval: 1s
       # The backend needs time to initialise (certs, lightning subscriptions,
-      # chain rescan, and — when enabled — connecting to the Arbitrum/Ethereum
-      # forks) before it listens on 9000. Keep it "starting" until then so
+      # chain rescan, and — when enabled — connecting to the Arbitrum fork)
+      # before it listens on 9000. Keep it "starting" until then so
       # dependents (nginx, web-app, client) are not aborted on a cold up.
       start_period: 120s
     profiles: ['default', 'ci', 'webapp-ci']
