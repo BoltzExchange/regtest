@@ -97,6 +97,10 @@ IMAGES: dict[str, Image] = {
         tag="latest",
         arguments=[],
     ),
+    "layerzero-oft": Image(
+        tag="latest",
+        arguments=[],
+    ),
     "scripts": Image(
         tag="latest",
         arguments=[

@@ -20,6 +20,8 @@ data/bitcoind/*
 !data/bitcoind/.gitkeep
 data/boltz-client/*
 !data/boltz-client/boltz.toml
+data/layerzero-oft/*
+!data/layerzero-oft/.gitkeep
 docker-compose.override.yml
 data/arkd/*
 !data/arkd/.gitkeep

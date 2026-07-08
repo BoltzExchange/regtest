@@ -1,0 +1,18 @@
+{
+    "scripts": {
+        "compile": "hardhat compile"
+    },
+    "dependencies": {
+        "@layerzerolabs/lz-evm-messagelib-v2": "3.0.168",
+        "@layerzerolabs/lz-evm-protocol-v2": "3.0.168",
+        "@layerzerolabs/lz-v2-utilities": "3.0.168",
+        "@layerzerolabs/oapp-evm": "0.4.1",
+        "@layerzerolabs/oft-evm": "4.0.1",
+        "@layerzerolabs/test-devtools-evm-hardhat": "0.5.3",
+        "@nomiclabs/hardhat-ethers": "2.2.3",
+        "@openzeppelin/contracts": "5.6.1",
+        "@openzeppelin/contracts-upgradeable": "5.6.1",
+        "ethers": "5.7.2",
+        "hardhat": "2.22.19"
+    }
+}

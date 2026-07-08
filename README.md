@@ -22,6 +22,20 @@ When using OrbStack on macOS, set `export DOCKER_DEFAULT_PLATFORM=linux/amd64` b
 
 Data dirs for the services are stored in `./data` folder.
 
+### Stablecoin OFT regtest
+
+The Arbitrum CI profiles start a plain Anvil chain and deploy a local LayerZero
+V2 OFT mesh with the official `EndpointV2Mock` testing endpoint. The deployment
+command writes the deployed addresses to `./data/layerzero-oft/deployment.json`
+for the webapp e2e tests.
+
+```bash
+python3 build.py build layerzero-oft
+COMPOSE_PROFILES=webapp-ci ./start.sh
+```
+
+The default profile is unchanged.
+
 ### Scripts container
 
 ```bash

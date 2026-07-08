@@ -32,6 +32,7 @@ WIPE_DIRS=(
     ".boltz-client"
     ".arkd"
     ".fulmine"
+    ".layerzero-oft"
 )
 
 for dir in "${WIPE_DIRS[@]}"; do

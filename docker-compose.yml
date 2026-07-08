@@ -14,6 +14,7 @@ x-services:
       - boltz-data:/root/.boltz-backend:z
       - arkd-data:/root/.arkd:z
       - fulmine-data:/root/.fulmine:z
+      - ./data/layerzero-oft:/root/.layerzero-oft:z
 
   base-lnd: &base-lnd
     image: ${LND_IMAGE}
@@ -307,6 +308,30 @@ services:
       EXTRA_ANVIL_ARGS: '--gas-limit 30000000'
     ports:
       - ${ARBITRUM_E2E_PORT:-18545}:8545
+    profiles: ['ci', 'webapp-ci']
+
+  anvil-oft:
+    <<: *base-anvil
+    hostname: anvil-oft
+    container_name: anvil-oft
+    environment:
+      CHAIN_ID: 31337
+    ports:
+      - ${LAYERZERO_OFT_PORT:-18548}:8545
+    profiles: ['ci', 'webapp-ci']
+
+  layerzero-oft:
+    hostname: layerzero-oft
+    container_name: layerzero-oft
+    image: ${LAYERZERO_OFT_IMAGE}
+    environment:
+      LAYERZERO_OFT_RPC_URL: http://anvil-oft:8545
+      LAYERZERO_OFT_OUTPUT_DIR: /data/layerzero-oft
+    depends_on:
+      anvil-oft:
+        condition: service_healthy
+    volumes:
+      - ./data/layerzero-oft:/data/layerzero-oft:z
     profiles: ['ci', 'webapp-ci']
 
   gas-sponsor-emulator:
