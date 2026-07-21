@@ -178,13 +178,23 @@ arkd-init(){
   arkd-sim wallet unlock --password ark
   waitForArkdToSync
 
-  bitcoin-cli-sim-server -rpcwallet=regtest sendtoaddress $(arkd-sim wallet address) 25
+  bitcoin-cli-sim-server -rpcwallet=regtest sendtoaddress $(arkd-sim wallet address) 100
   bitcoin-cli-sim-server -rpcwallet=regtest -generate 1
   echo "funded arkd"
 
   while ! curl -sf http://arkd:7070/v1/info > /dev/null 2>&1; do
     sleep 1
   done
+
+  # arkd only takes intent fees through its admin API at runtime; without
+  # them /v1/info advertises empty fee CEL expressions and SDK-side fee
+  # estimators cannot price intents.
+  echo "setting arkd intent fees"
+  arkd-sim fees intent \
+    --offchain-input 'amount * 0.01' \
+    --onchain-input 'amount * 0.01' \
+    --offchain-output '0.0' \
+    --onchain-output '250.0'
 }
 
 fulmine-init(){
