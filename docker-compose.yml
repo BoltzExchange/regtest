@@ -199,6 +199,9 @@ services:
       - bitcoin-data:/data/bitcoin:z
       - ./images/boltz-backend/entrypoint.sh:/boltz-entrypoint.sh:ro,z
       - ./images/boltz-backend/arbitrum.conf:/arbitrum.conf:ro,z
+      - ./images/boltz-backend/ark.conf:/ark.conf:ro,z
+      # For the [ark] macaroonpath; empty unless the ark stack is active.
+      - fulmine-data:/data/fulmine:z
     ports:
       - 9000:9000
     healthcheck:
