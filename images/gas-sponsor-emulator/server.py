@@ -16,6 +16,12 @@ SPONSORED_CALL_GAS_LIMIT = int(
     os.environ.get("GAS_SPONSOR_EMULATOR_CALL_GAS_LIMIT", "25000000")
 )
 
+with open("/batch-executor.json", encoding="utf-8") as artifact_file:
+    batch_executor_artifact = json.load(artifact_file)
+BATCH_EXECUTOR_CODE = batch_executor_artifact["deployedBytecode"]["object"]
+if not BATCH_EXECUTOR_CODE.startswith("0x"):
+    BATCH_EXECUTOR_CODE = "0x" + BATCH_EXECUTOR_CODE
+
 PREPARED_CALL_MAX_FEE_PER_GAS = 2_000_000_000
 PREPARED_CALL_MAX_PRIORITY_FEE_PER_GAS = 1_000_000_000
 
@@ -24,6 +30,7 @@ receipts = {}
 execution_errors = {}
 _state_lock = threading.Lock()
 _relayer_lock = threading.Lock()
+_batch_locks = {}
 
 # Anvil dev account #9: a well-known, unlocked key Anvil signs for. Sender-agnostic
 # sponsored calls are relayed from it so the mined tx has a real signature (the
@@ -101,6 +108,22 @@ def hex_quantity(value) -> str:
     return hex(int(str(value or "0"), 0))
 
 
+def encode_batch_calls(calls) -> str:
+    encoded_calls = ",".join(
+        f"({call['to']},{hex_quantity(call.get('value'))},{call.get('data', '0x')})"
+        for call in calls
+    )
+    return subprocess.check_output(
+        [
+            "cast",
+            "calldata",
+            "execute((address,uint256,bytes)[])",
+            f"[{encoded_calls}]",
+        ],
+        text=True,
+    ).strip()
+
+
 def compute_lockup_selector() -> str:
     # executeAndLockERC20WithPermit2 is sender-agnostic: Permit2 pulls the user's
     # tokens via the owner + signature embedded in the calldata, so any funded
@@ -167,6 +190,32 @@ def send_prepared_call(sender: str, call) -> str:
     return send_impersonated(sender, call)
 
 
+def batch_lock(sender: str):
+    with _state_lock:
+        return _batch_locks.setdefault(sender.lower(), threading.Lock())
+
+
+def send_prepared_calls(sender: str, calls):
+    if len(calls) == 1:
+        tx_hash = send_prepared_call(sender, calls[0])
+        return tx_hash, wait_for_receipt(tx_hash)
+
+    with batch_lock(sender):
+        rpc("anvil_setCode", [sender, BATCH_EXECUTOR_CODE])
+        try:
+            tx_hash = send_impersonated(
+                sender,
+                {
+                    "to": sender,
+                    "value": "0x0",
+                    "data": encode_batch_calls(calls),
+                },
+            )
+            return tx_hash, wait_for_receipt(tx_hash)
+        finally:
+            rpc("anvil_setCode", [sender, "0x"])
+
+
 def execute_prepared_calls(call_id: str):
     with _state_lock:
         entry = prepared_calls[call_id]
@@ -174,13 +223,12 @@ def execute_prepared_calls(call_id: str):
     if sender is None:
         raise RuntimeError(f"prepared call {call_id} is missing sender")
 
-    stored_receipts = []
-    for call in entry["calls"]:
-        tx_hash = send_prepared_call(sender, call)
-        receipt = wait_for_receipt(tx_hash)
-        if receipt["status"] != "0x1":
-            raise RuntimeError(f"prepared call {call_id} reverted: {tx_hash}")
-        stored_receipts.append(
+    tx_hash, receipt = send_prepared_calls(sender, entry["calls"])
+    if receipt["status"] != "0x1":
+        raise RuntimeError(f"prepared call {call_id} reverted: {tx_hash}")
+
+    with _state_lock:
+        receipts[call_id] = [
             {
                 "transactionHash": tx_hash,
                 "status": "0x1",
@@ -188,10 +236,7 @@ def execute_prepared_calls(call_id: str):
                 "blockNumber": receipt["blockNumber"],
                 "gasUsed": receipt["gasUsed"],
             }
-        )
-
-    with _state_lock:
-        receipts[call_id] = stored_receipts
+        ]
 
 
 def run_prepared_calls(call_id: str):
