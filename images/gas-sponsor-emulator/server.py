@@ -24,6 +24,7 @@ if not BATCH_EXECUTOR_CODE.startswith("0x"):
 
 PREPARED_CALL_MAX_FEE_PER_GAS = 2_000_000_000
 PREPARED_CALL_MAX_PRIORITY_FEE_PER_GAS = 1_000_000_000
+FUNDED_BALANCE = hex(100 * 10**18)
 
 prepared_calls = {}
 receipts = {}
@@ -38,7 +39,7 @@ _batch_locks = {}
 RELAYER_ADDRESS = os.environ.get(
     "GAS_SPONSOR_EMULATOR_RELAYER_ADDRESS",
     "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720",
-)
+).lower()
 
 
 def rpc(method: str, params=None):
@@ -167,13 +168,13 @@ def is_sender_agnostic(call) -> bool:
 
 def send_from_relayer(call) -> str:
     with _relayer_lock:
-        rpc("anvil_setBalance", [RELAYER_ADDRESS, hex(100 * 10**18)])
+        rpc("anvil_setBalance", [RELAYER_ADDRESS, FUNDED_BALANCE])
         rpc("anvil_setCode", [RELAYER_ADDRESS, "0x"])
         return rpc("eth_sendTransaction", [transaction_params(RELAYER_ADDRESS, call)])
 
 
 def send_impersonated(sender: str, call) -> str:
-    rpc("anvil_setBalance", [sender, hex(100 * 10**18)])
+    rpc("anvil_setBalance", [sender, FUNDED_BALANCE])
     rpc("anvil_impersonateAccount", [sender])
     try:
         return rpc("eth_sendTransaction", [transaction_params(sender, call)])
@@ -200,16 +201,19 @@ def send_prepared_calls(sender: str, calls):
         tx_hash = send_prepared_call(sender, calls[0])
         return tx_hash, wait_for_receipt(tx_hash)
 
+    if sender.lower() == RELAYER_ADDRESS:
+        raise RuntimeError("batch sender must not be the relayer address")
+
     with batch_lock(sender):
+        rpc("anvil_setBalance", [sender, FUNDED_BALANCE])
         rpc("anvil_setCode", [sender, BATCH_EXECUTOR_CODE])
         try:
-            tx_hash = send_impersonated(
-                sender,
+            tx_hash = send_from_relayer(
                 {
                     "to": sender,
                     "value": "0x0",
                     "data": encode_batch_calls(calls),
-                },
+                }
             )
             return tx_hash, wait_for_receipt(tx_hash)
         finally:
