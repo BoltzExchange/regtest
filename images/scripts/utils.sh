@@ -129,20 +129,32 @@ regtest-start(){
 }
 
 elements-init(){
-  elements-cli-sim createwallet regtest || elements-cli-sim loadwallet regtest true
-  echo "mining 150 liquid blocks..."
-  elements-cli-sim-server -generate 150 > /dev/null
-  elements-cli-sim-server rescanblockchain 0 > /dev/null
+  # A legacy faucet claims the regtest-only OP_TRUE genesis allocation. Keep it
+  # separate so the backend wallet contains only Taproot UTXOs.
+  elements-cli-sim createwallet faucet || elements-cli-sim loadwallet faucet true
+  FAUCET_ADDRESS=$(elements-cli-sim -rpcwallet=faucet getnewaddress "" bech32)
+  elements-cli-sim -rpcwallet=faucet generatetoaddress 150 $FAUCET_ADDRESS > /dev/null
+  elements-cli-sim -rpcwallet=faucet rescanblockchain 0 > /dev/null
 
-  elements-cli-sim createwallet client || elements-cli-sim loadwallet client true
+  elements-cli-sim createwallet regtest false false "" false true || elements-cli-sim loadwallet regtest true
+  elements-cli-sim createwallet client false false "" false true || elements-cli-sim loadwallet client true
 
+  SERVER_ADDRESS=$(elements-cli-sim-server getnewaddress)
   CLIENT_ADDRESS=$(elements-cli-sim -rpcwallet=client getnewaddress)
-  elements-cli-sim-server -rpcwallet=regtest sendtoaddress $CLIENT_ADDRESS 10
+  # First wpkh_slip77 address of "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".
+  SLIP77_ADDRESS=el1qq2xvpcvfup5j8zscjq05u2wxxjcyewk7979f3mmz5l7uw5pqmx6xf5xy50hsn6vhkm5euwt72x878eq6zxx2z0z676mna6kdq
 
-  # First wpkh_slip77 address of "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-  elements-cli-sim-server -rpcwallet=regtest sendtoaddress el1qq2xvpcvfup5j8zscjq05u2wxxjcyewk7979f3mmz5l7uw5pqmx6xf5xy50hsn6vhkm5euwt72x878eq6zxx2z0z676mna6kdq 10
-
-  elements-cli-sim-server -rpcwallet=regtest -generate 1
+  # Spend the OP_TRUE genesis output explicitly. The faucet cannot derive the
+  # bech32m change required by the daemon, and must never feed legacy change
+  # into the backend wallet.
+  UTXO=$(elements-cli-sim -rpcwallet=faucet listunspent | jq -c '.[0] | {txid, vout}')
+  INPUTS=$(jq -cn --argjson utxo "$UTXO" '[$utxo]')
+  OUTPUTS=$(jq -cn --arg server "$SERVER_ADDRESS" --arg client "$CLIENT_ADDRESS" --arg slip77 "$SLIP77_ADDRESS" --arg faucet "$FAUCET_ADDRESS" \
+    '[{($server): 1000}, {($client): 10}, {($slip77): 10}, {($faucet): 20998979.9999}, {fee: 0.0001}]')
+  RAW=$(elements-cli-sim -rpcwallet=faucet createrawtransaction "$INPUTS" "$OUTPUTS")
+  BLINDED=$(elements-cli-sim -rpcwallet=faucet blindrawtransaction "$RAW" false)
+  elements-cli-sim sendrawtransaction "$BLINDED" > /dev/null
+  elements-cli-sim-server generatetoaddress 1 $SERVER_ADDRESS > /dev/null
 }
 
 regtest-init(){
