@@ -12,8 +12,6 @@ x-services:
       - lnd3-data:/root/.lnd-3:z
       - boltz-client-data:/root/.boltz-client:z
       - boltz-data:/root/.boltz-backend:z
-      - arkd-data:/root/.arkd:z
-      - fulmine-data:/root/.fulmine:z
 
   base-lnd: &base-lnd
     image: ${LND_IMAGE}
@@ -108,38 +106,6 @@ x-services:
       interval: 1s
       start_period: 10s
 
-  base-anvil: &base-anvil
-    image: ${FOUNDRY_IMAGE}
-    restart: always
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        rpc_url="$${FORK_RPC_URL:-}"
-        if [ -z "$$rpc_url" ]; then
-          exec anvil --host 0.0.0.0 --chain-id "$$CHAIN_ID" $$EXTRA_ANVIL_ARGS
-        fi
-        exec anvil \
-          --host 0.0.0.0 \
-          --chain-id "$$CHAIN_ID" \
-          $$EXTRA_ANVIL_ARGS \
-          --no-rate-limit \
-          --fork-url "$$rpc_url" \
-          --fork-block-number "$$FORK_BLOCK_NUMBER"
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          if [ -n "$$FORK_RPC_URL" ] && [ -n "$$FORK_READY_ADDRESS" ]; then
-            size=$$(cast codesize "$$FORK_READY_ADDRESS" --rpc-url http://127.0.0.1:8545) && [ "$$size" -gt 0 ]
-          else
-            cast block-number --rpc-url http://127.0.0.1:8545
-          fi
-      timeout: 15s
-      retries: 30
-      interval: 2s
-      start_period: 0s
-
 services:
   cleanup:
     <<: *base-scripts
@@ -188,9 +154,6 @@ services:
     container_name: boltz-backend
     user: '${UID:-1000}:${GID:-1000}'
     depends_on:
-      anvil-arb:
-        condition: service_healthy
-        required: false
       regtest-start:
         condition: service_completed_successfully
       postgres:
@@ -206,10 +169,6 @@ services:
       - elements-data:/data/elements:z
       - bitcoin-data:/data/bitcoin:z
       - ./images/boltz-backend/entrypoint.sh:/boltz-entrypoint.sh:ro,z
-      - ./images/boltz-backend/arbitrum.conf:/arbitrum.conf:ro,z
-      - ./images/boltz-backend/ark.conf:/ark.conf:ro,z
-      # For the [ark] macaroonpath; empty unless the ark stack is active.
-      - fulmine-data:/data/fulmine:z
     ports:
       - 9000:9000
     healthcheck:
@@ -218,7 +177,7 @@ services:
       retries: 10
       interval: 1s
       # The backend needs time to initialise (certs, lightning subscriptions,
-      # chain rescan, and — when enabled — connecting to the Arbitrum fork)
+      # and chain rescan)
       # before it listens on 9000. Keep it "starting" until then so
       # dependents (nginx, web-app, client) are not aborted on a cold up.
       start_period: 120s
@@ -278,69 +237,6 @@ services:
       - elements-data:/root/.elements:z
       - boltz-client-data:/root/.boltz:z
     profiles: ['default']
-
-  anvil:
-    hostname: anvil
-    container_name: boltz-anvil
-    image: ${FOUNDRY_IMAGE}
-    # Chain ID 33 is the regtest of Rootstock
-    entrypoint: 'anvil --host 0.0.0.0 --chain-id 33'
-    ports:
-      - 8545:8545
-    healthcheck:
-      test: ['CMD-SHELL', "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/8545'"]
-      timeout: 1s
-      retries: 3
-      interval: 1s
-      start_period: 0s
-    profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
-
-  anvil-eth:
-    <<: *base-anvil
-    hostname: anvil-eth
-    container_name: anvil-eth
-    environment:
-      FORK_RPC_URL: ${ETHEREUM_E2E_RPC_URL:-}
-      FORK_BLOCK_NUMBER: ${ETHEREUM_E2E_BLOCK_NUMBER}
-      CHAIN_ID: 1
-      FORK_READY_ADDRESS: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-    ports:
-      - ${ETHEREUM_E2E_PORT:-18546}:8545
-    profiles: ['ci', 'webapp-ci']
-
-  anvil-arb:
-    <<: *base-anvil
-    hostname: anvil-arb
-    container_name: anvil-arb
-    environment:
-      FORK_RPC_URL: ${ARBITRUM_E2E_RPC_URL:-}
-      FORK_BLOCK_NUMBER: ${ARBITRUM_E2E_BLOCK_NUMBER}
-      CHAIN_ID: 42161
-      EXTRA_ANVIL_ARGS: '--gas-limit 30000000'
-      FORK_READY_ADDRESS: '0x6398B76DF91C5eBe9f488e3656658E79284dDc0F'
-    ports:
-      - ${ARBITRUM_E2E_PORT:-18545}:8545
-    profiles: ['ci', 'webapp-ci']
-
-  gas-sponsor-emulator:
-    hostname: gas-sponsor-emulator
-    container_name: boltz-gas-sponsor-emulator
-    image: ${GAS_SPONSOR_EMULATOR_IMAGE}
-    environment:
-      ARBITRUM_RPC_URL: http://anvil-arb:8545
-      GAS_SPONSOR_EMULATOR_PORT: 18547
-    depends_on:
-      anvil-arb:
-        condition: service_healthy
-    ports:
-      - ${GAS_SPONSOR_EMULATOR_PORT:-18547}:18547
-    healthcheck:
-      test: ['CMD-SHELL', "timeout 1 bash -c 'echo > /dev/tcp/127.0.0.1/18547'"]
-      timeout: 1s
-      retries: 10
-      interval: 1s
-      start_period: 0s
-    profiles: ['ci', 'webapp-ci']
 
   bitcoind:
     container_name: boltz-bitcoind
@@ -483,8 +379,6 @@ services:
     <<: *base-scripts
     restart: no
     container_name: boltz-regtest-start
-    environment:
-      - COMPOSE_PROFILES=${COMPOSE_PROFILES:-}
     entrypoint:
       ['/bin/bash', '-c', 'source /etc/profile.d/utils.sh && regtest-start']
     depends_on:
@@ -502,14 +396,6 @@ services:
         condition: service_healthy
       cln-2:
         condition: service_healthy
-      anvil:
-        condition: service_healthy
-      anvil-eth:
-        condition: service_healthy
-        required: false
-      anvil-arb:
-        condition: service_healthy
-        required: false
     profiles: ['default', 'ci', 'backend-dev', 'webapp-ci']
 
   scripts:
@@ -603,143 +489,6 @@ services:
       - 4003:4003
     profiles: ['default', 'esplora', 'backend-dev', 'webapp-ci']
 
-  otterscan:
-    hostname: otterscan
-    container_name: boltz-otterscan
-    restart: always
-    image: ${OTTERSCAN_IMAGE}
-    environment:
-      - OTTERSCAN_CONFIG={"erigonURL":"http://localhost:8545","chainInfo":{"name":"Anvil","faucets":[],"nativeCurrency":{"name":"Rootstock
-        BTC","symbol":"RBTC","decimals":18}}}
-    depends_on:
-      anvil:
-        condition: service_healthy
-    ports:
-      - 5100:80
-    profiles: ['default']
-
-  nbxplorer:
-    container_name: boltz-nbxplorer
-    image: ${NBXPLORER_IMAGE}
-    restart: unless-stopped
-    ports:
-      - '32838:32838'
-    expose:
-      - '32838'
-    environment:
-      NBXPLORER_NETWORK: regtest
-      NBXPLORER_CHAINS: 'btc'
-      NBXPLORER_BTCRPCURL: http://bitcoind:18443/
-      NBXPLORER_BTCRPCCOOKIEFILE: /app/bitcoin/regtest/.cookie
-      NBXPLORER_BTCNODEENDPOINT: bitcoind:18444
-      NBXPLORER_BIND: 0.0.0.0:32838
-      NBXPLORER_MINGAPSIZE: 5
-      NBXPLORER_MAXGAPSIZE: 10
-      NBXPLORER_VERBOSE: 1
-      NBXPLORER_POSTGRES:
-        User ID=boltz;Password=boltz;Include Error
-        Detail=true;Host=postgres;Port=5432;Database=nbxplorer
-      NBXPLORER_EXPOSERPC: 1
-      NBXPLORER_NOAUTH: 1
-    depends_on:
-      bitcoind-init:
-        condition: service_completed_successfully
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test:
-        - CMD
-        - bash
-        - -lc
-        - |
-          exec 3<>/dev/tcp/127.0.0.1/32838 || exit 1
-          printf 'GET /v1/cryptos/BTC/status HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n' >&3
-          response="$$(cat <&3)" || exit 1
-          grep -q 'HTTP/1.1 200' <<<"$$response" &&
-          grep -q '"isFullySynched":true' <<<"$$response" &&
-          grep -q '"capabilities"' <<<"$$response"
-      interval: 2s
-      timeout: 2s
-      retries: 30
-      start_period: 10s
-    volumes:
-      - bitcoin-data:/app/bitcoin:z
-    profiles: ['btcpay', 'ark', 'backend-dev']
-
-  arkd-wallet:
-    image: ${ARKD_WALLET_IMAGE}
-    container_name: arkd-wallet
-    depends_on:
-      nbxplorer:
-        condition: service_healthy
-    ports:
-      - '6060:6060'
-    environment:
-      - ARKD_WALLET_LOG_LEVEL=5
-      - ARKD_WALLET_NBXPLORER_URL=http://nbxplorer:32838
-      - ARKD_WALLET_DATADIR=./data/regtest
-      - ARKD_WALLET_NETWORK=regtest
-      - ARKD_WALLET_SIGNER_KEY=afcd3fa10f82a05fddc9574fdb13b3991b568e89cc39a72ba4401df8abef35f0
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          "wget -q -T 1 -O - http://127.0.0.1:6060/v1/wallet/network | grep -q 'regtest'",
-        ]
-      interval: 1s
-      timeout: 1s
-      retries: 30
-      start_period: 0s
-    profiles: ['ark', 'backend-dev']
-
-  arkd:
-    image: ${ARKD_IMAGE}
-    container_name: arkd
-    depends_on:
-      arkd-wallet:
-        condition: service_healthy
-    ports:
-      - '7070:7070'
-    environment:
-      - ARKD_LOG_LEVEL=6
-      - ARKD_NO_MACAROONS=true
-      - ARKD_VTXO_TREE_EXPIRY=2048
-      - ARKD_UNILATERAL_EXIT_DELAY=512
-      - ARKD_PUBLIC_UNILATERAL_EXIT_DELAY=512
-      - ARKD_BOARDING_EXIT_DELAY=2048
-      - ARKD_CHECKPOINT_EXIT_DELAY=512
-      - ARKD_WALLET_ADDR=arkd-wallet:6060
-      - ARKD_ESPLORA_URL=http://electrs-bitcoin:3002
-      - ARKD_VTXO_MIN_AMOUNT=1
-      - ARKD_LIVE_STORE_TYPE=inmemory
-      - ARKD_EVENT_DB_TYPE=badger
-      - ARKD_DB_TYPE=sqlite
-      - ARKD_SESSION_DURATION=30
-    volumes:
-      - arkd-data:/app/data:z
-    profiles: ['ark', 'backend-dev']
-
-  fulmine:
-    image: ${FULMINE_IMAGE}
-    container_name: fulmine
-    restart: unless-stopped
-    depends_on:
-      arkd:
-        condition: service_started
-    ports:
-      - '7000:7000'
-      - '7001:7001'
-    environment:
-      - FULMINE_HTTP_PORT=7001
-      - FULMINE_ARK_SERVER=http://arkd:7070
-      - FULMINE_ESPLORA_URL=http://electrs-bitcoin:3002
-      - FULMINE_UNLOCKER_TYPE=env
-      - FULMINE_UNLOCKER_PASSWORD=ark
-      - FULMINE_DISABLE_TELEMETRY=true
-    volumes:
-      - fulmine-data:/app/data:z
-    profiles: ['ark', 'backend-dev']
-
   backend-dev-ready:
     <<: *base-scripts
     restart: no
@@ -821,17 +570,3 @@ volumes:
       type: none
       o: bind
       device: ./data/backend-nginx/
-  arkd-data:
-    name: arkd-data
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/arkd
-  fulmine-data:
-    name: fulmine-data
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/fulmine
